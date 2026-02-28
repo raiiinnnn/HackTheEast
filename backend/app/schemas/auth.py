@@ -19,8 +19,37 @@ class TokenResponse(BaseModel):
 
 class UserResponse(BaseModel):
     id: int
-    email: str
+    email: str | None = None
     display_name: str | None = None
+    auth_provider: str = "email"
+    abelian_address: str | None = None
 
     class Config:
         from_attributes = True
+
+
+# --- Google OAuth ---
+
+class GoogleAuthRequest(BaseModel):
+    id_token: str
+
+
+# --- Abelian Wallet ---
+
+class AbelianRegisterRequest(BaseModel):
+    crypto_address: str
+    display_name: str | None = None
+
+
+class AbelianChallengeRequest(BaseModel):
+    crypto_address: str
+
+
+class AbelianChallengeResponse(BaseModel):
+    challenge: str
+
+
+class AbelianVerifyRequest(BaseModel):
+    crypto_address: str
+    challenge: str
+    signature: str
