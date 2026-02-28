@@ -19,11 +19,12 @@ import {
   FontSize,
   BorderRadius,
 } from "../../src/constants/theme";
-import { GOOGLE_CLIENT_ID, GOOGLE_IOS_CLIENT_ID, API_BASE_URL } from "../../src/constants/api";
+import { GOOGLE_CLIENT_ID, GOOGLE_IOS_CLIENT_ID } from "../../src/constants/api";
 import {
   login,
   loginGoogle,
   abelianChallenge,
+  abelianSign,
   abelianVerify,
   abelianRestoreKeys,
 } from "../../src/api/auth";
@@ -90,31 +91,7 @@ export default function LoginScreen() {
 
   const signInWithWallet = async (address: string, sk: string) => {
     const challengeRes = await abelianChallenge(address);
-
-    const signResp = await fetch(`${API_BASE_URL}/api/v1/auth/abelian/sign`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        message: challengeRes.challenge,
-        spend_secret_key: sk,
-      }),
-    }).catch(() => null);
-
-    let signData: { signature: string };
-    if (signResp && signResp.ok) {
-      signData = await signResp.json();
-    } else {
-      const directResp = await fetch("http://localhost:8001/sign", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: challengeRes.challenge,
-          spend_secret_key: sk,
-        }),
-      });
-      signData = await directResp.json();
-    }
-
+    const signData = await abelianSign(challengeRes.challenge, sk);
     const res = await abelianVerify(
       address,
       challengeRes.challenge,

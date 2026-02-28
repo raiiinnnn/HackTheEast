@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Modal,
   View,
@@ -23,6 +23,10 @@ export function MnemonicDisplayModal({
   onConfirm,
 }: MnemonicDisplayProps) {
   const [confirmed, setConfirmed] = useState(false);
+
+  useEffect(() => {
+    if (visible) setConfirmed(false);
+  }, [visible]);
 
   return (
     <Modal
@@ -92,6 +96,10 @@ export function MnemonicInputModal({
   loading,
 }: MnemonicInputProps) {
   const [phrase, setPhrase] = useState("");
+
+  useEffect(() => {
+    if (visible) setPhrase("");
+  }, [visible]);
 
   const wordCount = phrase.trim().split(/\s+/).filter(Boolean).length;
   const isValid = wordCount === 24;

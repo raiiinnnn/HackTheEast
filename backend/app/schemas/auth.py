@@ -65,3 +65,8 @@ class AbelianVerifyRequest(BaseModel):
 
 class AbelianRestoreRequest(BaseModel):
     mnemonic: str
+
+
+class AbelianSignRequest(BaseModel):
+    message: str
+    spend_secret_key: str
