@@ -1,13 +1,16 @@
 """
-MiniMax video generation — generates short AI video clips from text prompts.
+MiniMax video generation — generates short AI video clips from text or image prompts.
 
-Used for "hero" visual moments: animated diagrams, concept visualizations,
-things that can't be captured from slides or lecture video alone.
+Supports:
+- Text-to-Video (T2V): generate from a text prompt
+- Image-to-Video (I2V): animate a reference image (e.g. a character) with a text prompt
 """
 
 from __future__ import annotations
 
+import base64
 import os
+import re
 import time
 from pathlib import Path
 
@@ -42,13 +45,7 @@ class MinimaxVideoGenerator:
         max_wait_sec: int = 300,
     ) -> Path | None:
         """
-        Generate a video clip from a text prompt.
-
-        Args:
-            prompt: Description of what the video should show
-            output_path: Where to save the downloaded MP4
-            duration: 6 or 10 seconds (MiniMax constraint)
-            max_wait_sec: Max time to wait for generation
+        Generate a video clip from a text prompt (T2V).
 
         Returns:
             Path to the MP4 file, or None if generation failed/timed out.
@@ -63,6 +60,58 @@ class MinimaxVideoGenerator:
         except Exception as e:
             print(f"    [MiniMax Video] Error: {e}")
             return None
+
+    def generate_from_image(
+        self,
+        image_path: str | Path,
+        prompt: str,
+        output_path: str | Path,
+        duration: int = 6,
+        max_wait_sec: int = 300,
+    ) -> Path | None:
+        """
+        Animate a reference image into a video clip (I2V).
+
+        Args:
+            image_path: Path to the character/reference image (PNG/JPG)
+            prompt: Description of how to animate the image
+            output_path: Where to save the downloaded MP4
+            duration: 6 or 10 seconds
+            max_wait_sec: Max time to wait for generation
+
+        Returns:
+            Path to the MP4 file, or None if generation failed/timed out.
+        """
+        if not self.available:
+            print(f"    [MiniMax Video] Not available (mock={self.mock}, key={'set' if self.api_key else 'missing'})")
+            return None
+
+        image_path = Path(image_path)
+        if not image_path.exists():
+            print(f"    [MiniMax Video] Reference image not found: {image_path}")
+            return None
+
+        try:
+            image_data_url = self._encode_image(image_path)
+            task_id = self._submit_i2v(image_data_url, prompt, duration)
+            return self._poll_and_download(task_id, output_path, max_wait_sec)
+        except Exception as e:
+            print(f"    [MiniMax Video] I2V Error: {e}")
+            return None
+
+    @staticmethod
+    def _encode_image(image_path: Path) -> str:
+        """Encode an image file as a base64 data URL for the MiniMax API."""
+        suffix = image_path.suffix.lower()
+        mime = {
+            ".png": "image/png",
+            ".jpg": "image/jpeg",
+            ".jpeg": "image/jpeg",
+            ".webp": "image/webp",
+        }.get(suffix, "image/png")
+        raw = image_path.read_bytes()
+        b64 = base64.b64encode(raw).decode()
+        return f"data:{mime};base64,{b64}"
 
     def _submit(self, prompt: str, duration: int) -> str:
         import httpx
@@ -95,7 +144,47 @@ class MinimaxVideoGenerator:
         if not task_id:
             raise RuntimeError("No task_id returned")
 
-        print(f"    [MiniMax Video] Submitted task: {task_id}")
+        print(f"    [MiniMax Video] Submitted T2V task: {task_id}")
+        return task_id
+
+    def _submit_i2v(self, image_data_url: str, prompt: str, duration: int) -> str:
+        import httpx
+
+        duration = 10 if duration >= 10 else 6
+        i2v_model = os.getenv("MINIMAX_I2V_MODEL", "MiniMax-Hailuo-2.3")
+
+        body = {
+            "model": i2v_model,
+            "first_frame_image": image_data_url,
+            "prompt": prompt[:2000] if prompt else "",
+            "duration": duration,
+            "prompt_optimizer": False,
+        }
+
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
+        }
+
+        print(f"    [MiniMax Video] Submitting I2V (model={i2v_model}, {duration}s)...")
+        with httpx.Client(timeout=60) as client:
+            r = client.post(
+                f"{self.base_url}/v1/video_generation",
+                headers=headers,
+                json=body,
+            )
+            r.raise_for_status()
+            data = r.json()
+
+        if data.get("base_resp", {}).get("status_code") != 0:
+            msg = data.get("base_resp", {}).get("status_msg", "unknown")
+            raise RuntimeError(f"I2V submit error: {msg}")
+
+        task_id = data.get("task_id")
+        if not task_id:
+            raise RuntimeError("No task_id returned")
+
+        print(f"    [MiniMax Video] Submitted I2V task: {task_id}")
         return task_id
 
     def _poll_and_download(

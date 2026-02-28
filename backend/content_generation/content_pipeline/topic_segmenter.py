@@ -17,7 +17,12 @@ if TYPE_CHECKING:
 
 @dataclass
 class TopicSegment:
-    """A segment of the lecture covering one distinct topic/subtopic."""
+    """A segment of the lecture covering one distinct topic.
+
+    Each topic breaks down into several ``concepts`` — specific, self-contained
+    learnable ideas.  The script generator produces exactly one reel per concept,
+    so a full series of reels covers the topic completely without overlap.
+    """
     topic_name: str
     start_sec: float
     end_sec: float
@@ -26,6 +31,8 @@ class TopicSegment:
     related_slide_nums: list[int] = field(default_factory=list)
     slide_content_summary: str = ""
     visual_elements: list[str] = field(default_factory=list)
+    # List of {name, description} dicts, one per reel-worthy concept
+    concepts: list[dict] = field(default_factory=list)
 
     @property
     def duration_sec(self) -> float:
@@ -47,6 +54,7 @@ class TopicSegment:
             "related_slide_nums": self.related_slide_nums,
             "slide_content_summary": self.slide_content_summary,
             "visual_elements": self.visual_elements,
+            "concepts": self.concepts,
         }
 
 
@@ -151,8 +159,12 @@ SLIDE CONTENT (for cross-referencing):
 {slide_context}
 """
 
-        return f"""Analyze this lecture transcript and identify distinct topics/subtopics.
-For each topic, provide the timestamp range, key points, and which slides are related.
+        return f"""Analyze this lecture transcript and identify the main topics, then break each topic into specific learnable concepts.
+
+A TOPIC is a broad subject area (e.g. "C++ References").
+A CONCEPT is a specific, self-contained idea within a topic that can be fully explained in a 30-second video (e.g. "What a reference is and why it exists", "How passing by reference differs from passing by value").
+
+Each concept will become exactly ONE short-form reel. A viewer who watches all concept reels for a topic will understand that topic completely.
 
 TIMESTAMPED TRANSCRIPT:
 {transcript}
@@ -166,17 +178,25 @@ Produce a JSON object with this EXACT structure:
       "end_time": "M:SS format",
       "key_points": ["point 1", "point 2", ...],
       "related_slides": [1, 3],
-      "visual_elements": ["diagram of X on slide 3", "formula Y on slide 5", ...]
+      "visual_elements": ["diagram of X on slide 3", "formula Y on slide 5", ...],
+      "concepts": [
+        {{
+          "name": "Specific concept name (e.g. What is a reference)",
+          "description": "One sentence: exactly what this concept covers and the key insight"
+        }}
+      ]
     }}
   ]
 }}
 
 Rules:
-- Break the lecture into 3-8 distinct topics (aim for segments of 1-5 minutes each)
-- Each topic should cover a coherent concept or idea
-- Include ALL content from start to end (no gaps)
-- related_slides should reference slide numbers that match the topic content
-- visual_elements should describe diagrams, charts, formulas, or key visuals relevant to this topic
+- Break the lecture into 2-6 distinct TOPICS (broad subject areas, each 2-10 minutes)
+- Each topic must be unique — no two topics should overlap
+- Each topic should have 1-5 CONCEPTS depending on depth: a short introductory topic may have just 1, a deep topic with many sub-ideas may have up to 5
+- CRITICAL: Every concept must teach a DIFFERENT idea. "What is X" and "Why X matters" are the SAME idea — merge them into one concept. Only create separate concepts when the actual content being taught is different (e.g. different techniques, different categories, different examples that illustrate fundamentally different points)
+- Each concept must be completely distinct from every other concept across ALL topics
+- Concepts should be ordered logically (simpler ideas before advanced ones)
+- SKIP any segment covering: today's agenda, course logistics, administrative announcements, assignment deadlines, grading policies, class schedule, housekeeping, or recap of previous lectures. Only include segments teaching actual subject-matter
 - Output ONLY the JSON, no other text"""
 
     def _parse_segmentation_result(
@@ -220,6 +240,18 @@ Rules:
                     for s in matched
                 )
 
+            # Parse concepts — validate each entry has name + description
+            raw_concepts = t.get("concepts", [])
+            concepts = []
+            for c in raw_concepts:
+                if isinstance(c, dict) and c.get("name"):
+                    concepts.append({
+                        "name": c["name"].strip(),
+                        "description": c.get("description", "").strip(),
+                    })
+                elif isinstance(c, str) and c.strip():
+                    concepts.append({"name": c.strip(), "description": ""})
+
             topic_segments.append(TopicSegment(
                 topic_name=t.get("topic_name", "Untitled Topic"),
                 start_sec=start,
@@ -229,6 +261,7 @@ Rules:
                 related_slide_nums=related_nums,
                 slide_content_summary=slide_summary,
                 visual_elements=t.get("visual_elements", []),
+                concepts=concepts,
             ))
 
         return topic_segments

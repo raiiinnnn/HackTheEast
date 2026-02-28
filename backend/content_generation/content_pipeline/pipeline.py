@@ -40,12 +40,14 @@ class PipelineResult:
     processing_time_sec: float = 0.0
     video_path: str = ""
     slides_path: str = ""
+    notes_path: str = ""
 
     def to_dict(self) -> dict:
         return {
             "metadata": {
                 "video_path": self.video_path,
                 "slides_path": self.slides_path,
+                "notes_path": self.notes_path,
                 "processing_time_sec": round(self.processing_time_sec, 2),
                 "num_transcript_segments": len(self.transcript_segments),
                 "num_slides": len(self.slides),
@@ -82,14 +84,24 @@ class PipelineResult:
         print(f"{'─'*50}")
         print(f"  Video: {self.video_path or 'N/A'}")
         print(f"  Slides: {self.slides_path or 'N/A'}")
+        print(f"  Notes: {self.notes_path or 'N/A'}")
         print(f"  Transcript segments: {len(self.transcript_segments)}")
         print(f"  Slides analyzed: {len(self.slides)}")
         print(f"  Topics identified: {len(self.topic_segments)}")
         for t in self.topic_segments:
-            print(f"    • {t.topic_name} ({t.time_range_formatted})")
+            concept_count = len(t.concepts)
+            tag = f"{concept_count} concept(s)" if concept_count else "no concepts"
+            print(f"    • {t.topic_name} ({t.time_range_formatted}) [{tag}]")
+            for c in t.concepts:
+                print(f"        – {c['name']}")
         print(f"  Reel scripts generated: {len(self.reel_scripts)}")
         for r in self.reel_scripts:
-            print(f"    • {r.topic} ({r.target_duration_sec}s)")
+            extras = f"[{r.format}]" if r.format else ""
+            if r.length:
+                extras += f" {r.length}"
+            if r.voice:
+                extras += f" voice={r.voice}"
+            print(f"    • {r.topic} ({r.target_duration_sec}s) {extras}")
         print(f"  Processing time: {self.processing_time_sec:.1f}s")
         print(f"{'─'*50}")
 
@@ -110,9 +122,14 @@ class ContentPipeline:
         whisper_model: str = "base",
         language: str | None = "en",
         transcriber_backend: str = "whisper",
+        formats: list[str] | None = None,
+        characters: list[str] | None = None,
+        length: str = "mix",
     ):
         self.reel_duration = reel_duration
         self.max_reels = max_reels
+        self.formats = formats
+        self.characters = characters
 
         if transcriber_backend == "aws":
             self.transcriber = AWSTranscriber(language=language)
@@ -122,41 +139,45 @@ class ContentPipeline:
         self.slide_analyzer = SlideAnalyzer()
         self.topic_segmenter = TopicSegmenter()
         self.script_generator = ScriptGenerator(
-            reel_duration=reel_duration, max_reels=max_reels
+            reel_duration=reel_duration, max_reels=max_reels, length=length,
         )
 
     def run(
         self,
         video_path: str | Path | None = None,
         slides_path: str | Path | None = None,
+        notes_path: str | Path | None = None,
         output_path: str | Path | None = None,
         max_topics: int | None = None,
     ) -> PipelineResult:
         """
         Run the full pipeline.
 
-        At least one of video_path or slides_path must be provided.
-        If both are provided, the transcript is cross-referenced with slide content.
+        At least one of video_path, slides_path, or notes_path must be provided.
 
         Args:
             video_path: Path to lecture video (.mp4, .mkv, .avi, etc.)
-            slides_path: Path to slides PDF
+            slides_path: Path to slides PDF (landscape)
+            notes_path: Path to notes file (.docx, .txt, or portrait PDF)
             output_path: If set, saves result JSON to this path
 
         Returns:
             PipelineResult with transcript, topics, and reel scripts.
         """
-        if not video_path and not slides_path:
-            raise ValueError("At least one of video_path or slides_path must be provided.")
+        if not video_path and not slides_path and not notes_path:
+            raise ValueError(
+                "At least one of video_path, slides_path, or notes_path must be provided."
+            )
 
         start_time = time.time()
         result = PipelineResult(
-            video_path=str(video_path or ""),
-            slides_path=str(slides_path or ""),
+            video_path=self._to_relative(video_path) if video_path else "",
+            slides_path=self._to_relative(slides_path) if slides_path else "",
+            notes_path=self._to_relative(notes_path) if notes_path else "",
         )
 
         print(f"\n{'='*60}")
-        print(f"  DoomLearn Content Pipeline")
+        print(f"  FocusFeed Content Pipeline")
         print(f"{'='*60}")
 
         # Step 1: Transcribe video
@@ -173,6 +194,14 @@ class ContentPipeline:
         else:
             print(f"\n[2/4] SLIDE ANALYSIS: skipped (no slides)")
 
+        # Step 2b: Read notes (if provided)
+        notes_text = ""
+        if notes_path:
+            from .notes_reader import read_notes
+            print(f"\n  READING NOTES: {notes_path}")
+            notes_text = read_notes(notes_path)
+            print(f"  ✓ Read {len(notes_text)} chars from notes")
+
         # Step 3: Segment into topics
         print(f"\n[3/4] SEGMENTING TOPICS")
         if result.transcript_segments:
@@ -182,6 +211,8 @@ class ContentPipeline:
             )
         elif result.slides:
             result.topic_segments = self._topics_from_slides_only(result.slides)
+        elif notes_text:
+            result.topic_segments = self._topics_from_notes(notes_text)
         else:
             raise RuntimeError("No content to segment.")
 
@@ -189,11 +220,15 @@ class ContentPipeline:
             result.topic_segments = result.topic_segments[:max_topics]
             print(f"  (Limited to {max_topics} topic(s) for testing)")
 
-        # Step 4: Generate reel scripts
+        # Step 4: Generate reel scripts (format decided here, not during production)
         print(f"\n[4/4] GENERATING REEL SCRIPTS")
         result.reel_scripts = self.script_generator.generate_scripts(
             result.topic_segments,
-            result.slides if result.slides else None,
+            slides=result.slides if result.slides else None,
+            formats=self.formats,
+            has_video=bool(video_path),
+            has_slides=bool(result.slides),
+            characters=self.characters,
         )
 
         result.processing_time_sec = time.time() - start_time
@@ -202,6 +237,18 @@ class ContentPipeline:
             result.save(output_path)
 
         return result
+
+    @staticmethod
+    def _to_relative(p: str | Path) -> str:
+        """Store paths relative to content_generation/ so the JSON is portable."""
+        p = Path(p).resolve()
+        # Walk up looking for the content_generation directory
+        cg_marker = Path(__file__).resolve().parent.parent  # .../content_generation/
+        try:
+            return str(p.relative_to(cg_marker.parent)).replace("\\", "/")
+        except ValueError:
+            # Outside the project tree — keep the filename as a fallback
+            return str(p).replace("\\", "/")
 
     def _topics_from_slides_only(self, slides: list[SlideContent]) -> list[TopicSegment]:
         """
@@ -230,3 +277,31 @@ class ContentPipeline:
             ))
         print(f"  ✓ Created {len(topics)} topic segments from slides.")
         return topics
+
+    def _topics_from_notes(self, notes_text: str) -> list[TopicSegment]:
+        """Create topic segments from notes text via LLM-based segmentation.
+
+        Splits the text into synthetic transcript segments (one per paragraph)
+        and feeds them through the normal topic segmenter.
+        """
+        print("  → Segmenting topics from notes text...")
+
+        paragraphs = [p.strip() for p in notes_text.split("\n\n") if p.strip()]
+        if not paragraphs:
+            paragraphs = [s.strip() for s in notes_text.split("\n") if s.strip()]
+
+        if not paragraphs:
+            raise RuntimeError("Notes file appears to be empty.")
+
+        synthetic_segments: list[TranscriptSegment] = []
+        cursor_sec = 0.0
+        for para in paragraphs:
+            duration = max(5.0, len(para) / 15.0)
+            synthetic_segments.append(TranscriptSegment(
+                start_sec=cursor_sec,
+                end_sec=cursor_sec + duration,
+                text=para,
+            ))
+            cursor_sec += duration
+
+        return self.topic_segmenter.segment(synthetic_segments, slides=None)

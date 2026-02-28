@@ -22,6 +22,11 @@ import sys
 import os
 from pathlib import Path
 
+if sys.stdout and hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if sys.stderr and hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 _SCRIPT_DIR = Path(__file__).resolve().parent
 _PKG_ROOT = _SCRIPT_DIR.parent                     # content_generation/
 _REPO_ROOT = _PKG_ROOT.parent                      # parent repo root
@@ -30,7 +35,7 @@ sys.path.insert(0, str(_REPO_ROOT))
 
 from content_generation.content_pipeline import ContentPipeline
 from content_generation.content_pipeline.transcriber import TranscriptSegment
-from content_generation.content_pipeline.slide_analyzer import SlideContent
+from content_generation.content_pipeline.slide_analyzer import SlideContent, detect_pdf_orientation
 from content_generation.content_pipeline.pipeline import PipelineResult
 from content_generation.content_pipeline.topic_segmenter import TopicSegmenter
 from content_generation.content_pipeline.script_generator import ScriptGenerator
@@ -40,17 +45,28 @@ _DEFAULT_OUTPUT = str(_PKG_ROOT / "output" / "pipeline_result.json")
 
 VIDEO_EXTENSIONS = {".mp4", ".mkv", ".avi", ".mov", ".webm", ".flv", ".wmv", ".m4v"}
 SLIDE_EXTENSIONS = {".pdf"}
+NOTES_EXTENSIONS = {".docx", ".doc", ".txt"}
 
 
-def scan_folder(folder: str | Path) -> tuple[str | None, str | None]:
-    """Scan a folder and auto-detect the first video and first PDF."""
+def scan_folder(
+    folder: str | Path,
+    input_type: str = "auto",
+) -> tuple[str | None, str | None, str | None]:
+    """Scan a folder and auto-detect the first video, slides PDF, and notes file.
+
+    ``input_type`` controls how PDFs are classified:
+      - ``"auto"``: landscape PDF = slides, portrait PDF = notes
+      - ``"slides"``: all PDFs treated as slides (legacy behavior)
+      - ``"notes"``: all PDFs treated as notes
+    """
     folder = Path(folder)
     if not folder.is_dir():
         print(f"Error: '{folder}' is not a directory.")
         sys.exit(1)
 
-    video_path = None
-    slides_path = None
+    video_path: str | None = None
+    slides_path: str | None = None
+    notes_path: str | None = None
 
     files = sorted(folder.iterdir())
     for f in files:
@@ -59,25 +75,39 @@ def scan_folder(folder: str | Path) -> tuple[str | None, str | None]:
         ext = f.suffix.lower()
         if ext in VIDEO_EXTENSIONS and video_path is None:
             video_path = str(f)
-        elif ext in SLIDE_EXTENSIONS and slides_path is None:
-            slides_path = str(f)
+        elif ext in NOTES_EXTENSIONS and notes_path is None:
+            notes_path = str(f)
+        elif ext in SLIDE_EXTENSIONS:
+            if input_type == "notes" and notes_path is None:
+                notes_path = str(f)
+            elif input_type == "slides" and slides_path is None:
+                slides_path = str(f)
+            elif input_type == "auto":
+                orientation = detect_pdf_orientation(f)
+                if orientation == "landscape" and slides_path is None:
+                    slides_path = str(f)
+                elif orientation == "portrait" and notes_path is None:
+                    notes_path = str(f)
 
     if video_path:
         print(f"  Found video: {video_path}")
     if slides_path:
         print(f"  Found slides: {slides_path}")
-    if not video_path and not slides_path:
-        print(f"  No video or PDF files found in '{folder}'.")
+    if notes_path:
+        print(f"  Found notes: {notes_path}")
+    if not video_path and not slides_path and not notes_path:
+        print(f"  No video, PDF, or notes files found in '{folder}'.")
         print(f"  Supported video formats: {', '.join(VIDEO_EXTENSIONS)}")
         print(f"  Supported slide formats: {', '.join(SLIDE_EXTENSIONS)}")
+        print(f"  Supported notes formats: {', '.join(NOTES_EXTENSIONS)}")
         sys.exit(1)
 
-    return video_path, slides_path
+    return video_path, slides_path, notes_path
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="DoomLearn Content Pipeline — analyze lecture content and generate reel scripts"
+        description="FocusFeed Content Pipeline — analyze lecture content and generate reel scripts"
     )
     parser.add_argument(
         "--input", "-i", default=_DEFAULT_INPUT,
@@ -85,6 +115,13 @@ def main():
     )
     parser.add_argument("--video", "-v", help="Path to lecture video file (.mp4, .mkv, etc.)")
     parser.add_argument("--slides", "-s", help="Path to slides PDF file")
+    parser.add_argument("--notes", help="Path to notes file (.docx, .txt, or portrait PDF)")
+    parser.add_argument(
+        "--input-type", default="auto",
+        choices=["auto", "slides", "notes"],
+        help="How to classify PDFs: auto (landscape=slides, portrait=notes), "
+             "slides (all PDFs as slides), notes (all PDFs as notes). Default: auto"
+    )
     parser.add_argument(
         "--duration", "-d", type=int, default=30, choices=[15, 30, 60],
         help="Target reel duration in seconds (default: 30)"
@@ -124,6 +161,24 @@ def main():
         "--no-print-scripts", action="store_true",
         help="Don't print scripts to console"
     )
+    parser.add_argument(
+        "--formats", nargs="+",
+        choices=["video", "slides-only", "character", "asmr"],
+        default=None,
+        help="Reel formats to use (decides format per concept at script time). "
+             "Example: --formats video slides-only character"
+    )
+    parser.add_argument(
+        "--characters", nargs="+", default=None,
+        help="Character names for character-format reels. "
+             "Example: --characters minecraft_steve subway_surfer"
+    )
+    parser.add_argument(
+        "--length", default="mix",
+        choices=["short", "medium", "long", "mix"],
+        help="Reel length tier: short (up to 45s), medium (45-75s), long (75-120s), "
+             "or mix (auto-decide per concept). Default: mix"
+    )
 
     args = parser.parse_args()
 
@@ -133,25 +188,35 @@ def main():
     # Fast path: reuse existing transcript, just redo topics + scripts
     # ------------------------------------------------------------------
     if args.from_json:
-        _rescript(args.from_json, output_path, args.duration, args.max_reels, args.max_topics, args.no_print_scripts)
+        _rescript(
+            args.from_json, output_path, args.duration, args.max_reels,
+            args.max_topics, args.no_print_scripts,
+            formats=args.formats, characters=args.characters,
+            length=args.length,
+        )
         return
 
     # ------------------------------------------------------------------
-    # Normal path: full pipeline from video/slides
+    # Normal path: full pipeline from video/slides/notes
     # ------------------------------------------------------------------
     video_path = args.video
     slides_path = args.slides
+    notes_path = args.notes
 
     input_dir = Path(args.input)
     if input_dir.is_dir():
         print(f"\nScanning input folder: {args.input}")
-        found_video, found_slides = scan_folder(args.input)
+        found_video, found_slides, found_notes = scan_folder(
+            args.input, input_type=args.input_type,
+        )
         video_path = video_path or found_video
         slides_path = slides_path or found_slides
+        notes_path = notes_path or found_notes
 
-    if not video_path and not slides_path:
+    if not video_path and not slides_path and not notes_path:
         parser.error(
-            f"No video or PDF found. Put files in '{args.input}/' or use --video / --slides."
+            f"No video, slides, or notes found. Put files in '{args.input}/' "
+            "or use --video / --slides / --notes."
         )
 
     lang = args.language if args.language != "auto" else None
@@ -162,11 +227,15 @@ def main():
         whisper_model=args.whisper_model,
         language=lang,
         transcriber_backend=args.transcriber,
+        formats=args.formats,
+        characters=args.characters,
+        length=args.length,
     )
 
     result = pipeline.run(
         video_path=video_path,
         slides_path=slides_path,
+        notes_path=notes_path,
         output_path=output_path,
         max_topics=args.max_topics,
     )
@@ -179,7 +248,12 @@ def main():
     print(f"\nDone! Full result saved to: {output_path}")
 
 
-def _rescript(from_json: str, output_path: str, duration: int, max_reels: int, max_topics: int | None, no_print: bool):
+def _rescript(
+    from_json: str, output_path: str, duration: int, max_reels: int,
+    max_topics: int | None, no_print: bool,
+    formats: list[str] | None = None, characters: list[str] | None = None,
+    length: str = "mix",
+):
     """Load transcript + slides from an existing JSON, re-run only topics + scripts."""
     import time
 
@@ -189,7 +263,7 @@ def _rescript(from_json: str, output_path: str, duration: int, max_reels: int, m
         sys.exit(1)
 
     print(f"\n{'='*60}")
-    print(f"  DoomLearn — Re-generating topics + scripts")
+    print(f"  FocusFeed — Re-generating topics + scripts")
     print(f"  Source: {from_json}")
     print(f"{'='*60}")
 
@@ -199,6 +273,7 @@ def _rescript(from_json: str, output_path: str, duration: int, max_reels: int, m
     meta = data.get("metadata", {})
     video_path = meta.get("video_path", "")
     slides_path = meta.get("slides_path", "")
+    notes_path = meta.get("notes_path", "")
 
     raw_segs = data.get("transcript_segments", [])
     transcript_segments = [
@@ -238,8 +313,15 @@ def _rescript(from_json: str, output_path: str, duration: int, max_reels: int, m
         print(f"  (Limited to {max_topics} topic(s) for testing)")
 
     print(f"\n[2/2] GENERATING REEL SCRIPTS")
-    generator = ScriptGenerator(reel_duration=duration, max_reels=max_reels)
-    reel_scripts = generator.generate_scripts(topic_segments, slides if slides else None)
+    generator = ScriptGenerator(reel_duration=duration, max_reels=max_reels, length=length)
+    reel_scripts = generator.generate_scripts(
+        topic_segments,
+        slides=slides if slides else None,
+        formats=formats,
+        has_video=bool(video_path),
+        has_slides=bool(slides),
+        characters=characters,
+    )
 
     result = PipelineResult(
         transcript_segments=transcript_segments,
@@ -249,6 +331,7 @@ def _rescript(from_json: str, output_path: str, duration: int, max_reels: int, m
         processing_time_sec=time.time() - t0,
         video_path=video_path,
         slides_path=slides_path,
+        notes_path=notes_path,
     )
 
     result.save(output_path)

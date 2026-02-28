@@ -78,11 +78,13 @@ class VideoCompositor:
         self._extract_raw(video_path, start_sec, duration_sec, raw)
 
         # Step 2: apply blurred bg to the short clip
+        # bg: scale-to-fill 1080x1920 (crop excess), then blur — proper TikTok effect
         fc = (
-            f"[0:v]scale=54:96,scale={REEL_WIDTH}:{REEL_HEIGHT}:flags=bicubic[bg];"
+            f"[0:v]scale={REEL_WIDTH}:{REEL_HEIGHT}:force_original_aspect_ratio=increase,"
+            f"crop={REEL_WIDTH}:{REEL_HEIGHT},boxblur=20:3,setsar=1[bg];"
             f"[0:v]scale={REEL_WIDTH}:-2:"
-            f"force_original_aspect_ratio=decrease[fg];"
-            f"[bg][fg]overlay=(W-w)/2:(H-h)/2[out]"
+            f"force_original_aspect_ratio=decrease,setsar=1[fg];"
+            f"[bg][fg]overlay=(W-w)/2:(H-h)/2,setsar=1[out]"
         )
 
         _run([
@@ -130,9 +132,10 @@ class VideoCompositor:
         # Step 2: blur + panel overlay on the short clip
         if panel_is_video:
             fc = (
-                f"[0:v]scale=54:96,scale={REEL_WIDTH}:{REEL_HEIGHT}:flags=bicubic[bg];"
+                f"[0:v]scale={REEL_WIDTH}:{REEL_HEIGHT}:force_original_aspect_ratio=increase,"
+                f"crop={REEL_WIDTH}:{REEL_HEIGHT},boxblur=20:3,setsar=1[bg];"
                 f"[0:v]scale={REEL_WIDTH}:-2:"
-                f"force_original_aspect_ratio=decrease[fg];"
+                f"force_original_aspect_ratio=decrease,setsar=1[fg];"
                 f"[bg][fg]overlay=(W-w)/2:(H-h)/2[main];"
                 f"[1:v]scale={panel_width}:{panel_height}:"
                 f"force_original_aspect_ratio=decrease,"
@@ -152,9 +155,10 @@ class VideoCompositor:
             ], "blur+panel_vid")
         else:
             fc = (
-                f"[0:v]scale=54:96,scale={REEL_WIDTH}:{REEL_HEIGHT}:flags=bicubic[bg];"
+                f"[0:v]scale={REEL_WIDTH}:{REEL_HEIGHT}:force_original_aspect_ratio=increase,"
+                f"crop={REEL_WIDTH}:{REEL_HEIGHT},boxblur=20:3,setsar=1[bg];"
                 f"[0:v]scale={REEL_WIDTH}:-2:"
-                f"force_original_aspect_ratio=decrease[fg];"
+                f"force_original_aspect_ratio=decrease,setsar=1[fg];"
                 f"[bg][fg]overlay=(W-w)/2:(H-h)/2[main];"
                 f"[1:v]scale={panel_width}:{panel_height}:"
                 f"force_original_aspect_ratio=decrease,"
@@ -202,11 +206,12 @@ class VideoCompositor:
         slide_y = vid_h + 20               # 20px gap
 
         fc = (
-            # Blurred background from lecture
-            f"[0:v]scale=54:96,scale={REEL_WIDTH}:{REEL_HEIGHT}:flags=bicubic[bg];"
+            # Blurred background from lecture (scale-to-fill + blur)
+            f"[0:v]scale={REEL_WIDTH}:{REEL_HEIGHT}:force_original_aspect_ratio=increase,"
+            f"crop={REEL_WIDTH}:{REEL_HEIGHT},boxblur=20:3,setsar=1[bg];"
             # Clear classroom video, fit into top region
             f"[0:v]scale={REEL_WIDTH}:{vid_h}:"
-            f"force_original_aspect_ratio=decrease[vid];"
+            f"force_original_aspect_ratio=decrease,setsar=1[vid];"
             # Slide image, fit into bottom region
             f"[1:v]scale={REEL_WIDTH - 60}:{slide_h}:"
             f"force_original_aspect_ratio=decrease,"
@@ -377,6 +382,262 @@ class VideoCompositor:
         ], "concat")
 
         list_file.unlink(missing_ok=True)
+        return output_path
+
+    def pingpong_loop(
+        self,
+        video_path: str | Path,
+        target_duration: float,
+        output_path: str | Path,
+    ) -> Path:
+        """
+        Ping-pong loop: play forward then reversed, then stream-loop that
+        unit to fill target_duration. The stitch is seamless because the
+        last frame of forward == first frame of reversed (and vice versa).
+        """
+        video_path = Path(video_path)
+        output_path = Path(output_path)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        work = output_path.parent / f"_pp_{output_path.stem}"
+        work.mkdir(parents=True, exist_ok=True)
+
+        # 1) Normalize the source clip to fixed fps/format
+        norm_clip = work / "norm.mp4"
+        _run([
+            "ffmpeg", "-y",
+            "-i", str(video_path),
+            "-vf", f"fps={self.fps},format=yuv420p",
+            "-an", "-c:v", "libx264",
+            "-pix_fmt", "yuv420p",
+            "-preset", "ultrafast",
+            str(norm_clip),
+        ], "pp_norm")
+
+        # 2) Reverse
+        reversed_clip = work / "reversed.mp4"
+        _run([
+            "ffmpeg", "-y",
+            "-i", str(norm_clip),
+            "-vf", "reverse",
+            "-an", "-c:v", "libx264",
+            "-pix_fmt", "yuv420p",
+            "-r", str(self.fps),
+            "-preset", "ultrafast",
+            str(reversed_clip),
+        ], "pp_reverse")
+
+        # 3) Concat forward + reversed into one seamless ping-pong unit
+        concat_list = work / "concat.txt"
+        concat_list.write_text(
+            f"file '{norm_clip.as_posix()}'\nfile '{reversed_clip.as_posix()}'\n",
+            encoding="utf-8",
+        )
+        pingpong_unit = work / "pingpong.mp4"
+        _run([
+            "ffmpeg", "-y",
+            "-f", "concat", "-safe", "0",
+            "-i", str(concat_list),
+            "-c:v", "libx264", "-an",
+            "-pix_fmt", "yuv420p",
+            "-r", str(self.fps),
+            "-preset", "ultrafast",
+            str(pingpong_unit),
+        ], "pp_concat")
+
+        # 4) Stream-loop the ping-pong unit to fill the target duration
+        _run([
+            "ffmpeg", "-y",
+            "-stream_loop", "-1",
+            "-i", str(pingpong_unit),
+            "-t", f"{target_duration:.2f}",
+            "-c:v", "libx264", "-an",
+            "-pix_fmt", "yuv420p",
+            "-r", str(self.fps),
+            "-preset", "ultrafast",
+            str(output_path),
+        ], "pp_loop")
+
+        shutil.rmtree(str(work), ignore_errors=True)
+        return output_path
+
+    def character_with_slides(
+        self,
+        character_video: str | Path,
+        slide_image: str | Path,
+        audio_path: str | Path,
+        output_path: str | Path,
+    ) -> Path:
+        """
+        Split-screen layout: AI character video on top, slide image on bottom.
+
+        Top ~55%: character video (scaled to fill width, cropped to fit)
+        Bottom ~45%: slide with blurred background
+        Audio: TTS voiceover from audio_path
+        """
+        output_path = Path(output_path)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+
+        char_h = int(REEL_HEIGHT * 0.55)
+        slide_h = REEL_HEIGHT - char_h
+        slide_inner_w = REEL_WIDTH - 40
+        slide_inner_h = slide_h - 20
+
+        fc = (
+            # Character: scale + pad to exact dimensions, force pixel format
+            f"[0:v]scale={REEL_WIDTH}:{char_h}:force_original_aspect_ratio=decrease,"
+            f"pad={REEL_WIDTH}:{char_h}:(ow-iw)/2:(oh-ih)/2:color=black,"
+            f"setsar=1,format=yuv420p[char];"
+            # Slide: blurred background for the bottom region
+            f"[1:v]scale=54:96,scale={REEL_WIDTH}:{slide_h}:flags=bicubic,"
+            f"format=yuv420p[slidebg];"
+            # Slide: clear foreground, fit within padded area
+            f"[1:v]scale={slide_inner_w}:{slide_inner_h}:"
+            f"force_original_aspect_ratio=decrease,"
+            f"pad={REEL_WIDTH}:{slide_h}:(ow-iw)/2:(oh-ih)/2:color=0x0a0a1900,"
+            f"format=yuv420p[slidefg];"
+            # Blend slide bg + fg
+            f"[slidebg][slidefg]overlay=0:0,setsar=1[slide];"
+            # Stack character on top, slide on bottom
+            f"[char][slide]vstack[out]"
+        )
+
+        _run([
+            "ffmpeg", "-y",
+            "-i", str(character_video),
+            "-loop", "1", "-i", str(slide_image),
+            "-i", str(audio_path),
+            "-filter_complex", fc,
+            "-map", "[out]", "-map", "2:a",
+            "-c:v", "libx264", "-c:a", "aac", "-b:a", "192k",
+            "-pix_fmt", "yuv420p", "-r", str(self.fps),
+            "-shortest",
+            "-preset", "ultrafast",
+            str(output_path),
+        ], "char+slide")
+
+        return output_path
+
+    def character_with_multi_slides(
+        self,
+        character_video: str | Path,
+        slide_segments: list[tuple[str | Path, float]],
+        audio_path: str | Path,
+        output_path: str | Path,
+    ) -> Path:
+        """
+        Split-screen with multiple timed slides in the bottom half.
+
+        Renders each slide segment as a separate video, concatenates them,
+        then composites with the character video on top.
+        """
+        output_path = Path(output_path)
+        work = output_path.parent / f"_charslide_{output_path.stem}"
+        work.mkdir(parents=True, exist_ok=True)
+
+        if len(slide_segments) <= 1:
+            img = str(slide_segments[0][0]) if slide_segments else ""
+            return self.character_with_slides(
+                character_video, img, audio_path, output_path,
+            )
+
+        char_h = int(REEL_HEIGHT * 0.55)
+        slide_h = REEL_HEIGHT - char_h
+        slide_inner_w = REEL_WIDTH - 40
+        slide_inner_h = slide_h - 20
+
+        # Build per-slide bottom-half clips and concatenate
+        inputs: list[str] = []
+        filter_parts: list[str] = []
+        concat_inputs: list[str] = []
+
+        for i, (img_path, dur) in enumerate(slide_segments):
+            inputs.extend(["-loop", "1", "-t", f"{dur:.2f}", "-i", str(img_path)])
+            filter_parts.append(
+                f"[{i}:v]scale=54:96,scale={REEL_WIDTH}:{slide_h}:flags=bicubic[sbg{i}];"
+                f"[{i}:v]scale={slide_inner_w}:{slide_inner_h}:"
+                f"force_original_aspect_ratio=decrease,"
+                f"pad={REEL_WIDTH}:{slide_h}:(ow-iw)/2:(oh-ih)/2:color=0x0a0a1900[sfg{i}];"
+                f"[sbg{i}][sfg{i}]overlay=0:0[s{i}]"
+            )
+            concat_inputs.append(f"[s{i}]")
+
+        slide_strip = work / "slide_strip.mp4"
+        fc = ";".join(filter_parts)
+        fc += f";{''.join(concat_inputs)}concat=n={len(slide_segments)}:v=1:a=0[out]"
+
+        _run([
+            "ffmpeg", "-y",
+            *inputs,
+            "-filter_complex", fc,
+            "-map", "[out]",
+            "-c:v", "libx264", "-an",
+            "-pix_fmt", "yuv420p", "-r", str(self.fps),
+            "-preset", "ultrafast",
+            str(slide_strip),
+        ], "slide_strip")
+
+        # Now composite: character video (top) + slide strip (bottom) + audio
+        # Force both to exact pixel dimensions and pixel format before vstack
+        fc2 = (
+            f"[0:v]scale={REEL_WIDTH}:{char_h}:force_original_aspect_ratio=decrease,"
+            f"pad={REEL_WIDTH}:{char_h}:(ow-iw)/2:(oh-ih)/2:color=black,"
+            f"setsar=1,format=yuv420p[char];"
+            f"[1:v]scale={REEL_WIDTH}:{slide_h}:force_original_aspect_ratio=decrease,"
+            f"pad={REEL_WIDTH}:{slide_h}:(ow-iw)/2:(oh-ih)/2:color=black,"
+            f"setsar=1,format=yuv420p[slide];"
+            f"[char][slide]vstack[out]"
+        )
+
+        _run([
+            "ffmpeg", "-y",
+            "-i", str(character_video),
+            "-i", str(slide_strip),
+            "-i", str(audio_path),
+            "-filter_complex", fc2,
+            "-map", "[out]", "-map", "2:a",
+            "-c:v", "libx264", "-c:a", "aac", "-b:a", "192k",
+            "-pix_fmt", "yuv420p", "-r", str(self.fps),
+            "-shortest",
+            "-preset", "ultrafast",
+            str(output_path),
+        ], "char+multi_slide")
+
+        shutil.rmtree(str(work), ignore_errors=True)
+        return output_path
+
+    def character_fullscreen(
+        self,
+        character_video: str | Path,
+        audio_path: str | Path,
+        output_path: str | Path,
+    ) -> Path:
+        """Full-screen character video (1080x1920) with audio overlay.
+
+        Used for notes-only reels where there are no slides to display.
+        The character video is scaled to fill the frame with a blurred
+        background if the aspect ratio doesn't match.
+        """
+        output_path = Path(output_path)
+        filter_complex = (
+            f"[0:v]scale={REEL_WIDTH}:{REEL_HEIGHT}:force_original_aspect_ratio=increase,"
+            f"crop={REEL_WIDTH}:{REEL_HEIGHT},boxblur=20:3,setsar=1[bg];"
+            f"[0:v]scale={REEL_WIDTH}:{REEL_HEIGHT}:force_original_aspect_ratio=decrease,"
+            f"pad={REEL_WIDTH}:{REEL_HEIGHT}:(ow-iw)/2:(oh-ih)/2:color=black@0,"
+            f"setsar=1,format=yuva420p[fg];"
+            f"[bg][fg]overlay=0:0,format=yuv420p[v]"
+        )
+        _run([
+            "ffmpeg", "-y",
+            "-i", str(character_video),
+            "-i", str(audio_path),
+            "-filter_complex", filter_complex,
+            "-map", "[v]", "-map", "1:a",
+            "-c:v", "libx264", "-preset", "fast", "-crf", "23",
+            "-c:a", "aac", "-b:a", "128k",
+            "-shortest",
+            "-movflags", "+faststart",
+            str(output_path),
+        ], "char_fullscreen")
         return output_path
 
     def get_duration(self, path: str | Path) -> float:

@@ -81,6 +81,8 @@ def _get_model():
 def generate_subtitles_multi(
     clip_word_lists: list[tuple[float, list[dict]]],
     output_path: str | Path,
+    alignment: int = 2,
+    margin_v: int | None = None,
 ) -> Path | None:
     """
     Generate IG Reels-style karaoke subtitles from multiple clips' word lists.
@@ -149,13 +151,21 @@ def generate_subtitles_multi(
         return None
 
     output_path = Path(output_path)
-    _write_ass(dialogues, output_path)
+    _write_ass(dialogues, output_path, alignment=alignment, margin_v=margin_v)
     return output_path
 
 
-def _write_ass(dialogues: list[str], output_path: Path):
+def _write_ass(
+    dialogues: list[str],
+    output_path: Path,
+    alignment: int = 2,
+    margin_v: int | None = None,
+):
+    # alignment 2 = bottom-center (default), 8 = top-center
+    # margin_v is distance from the relevant screen edge (bottom for 2, top for 8)
+    mv = margin_v if margin_v is not None else MARGIN_V
     content = f"""[Script Info]
-Title: DoomLearn Subtitles
+Title: FocusFeed Subtitles
 ScriptType: v4.00+
 PlayResX: {REEL_WIDTH}
 PlayResY: {REEL_HEIGHT}
@@ -163,7 +173,7 @@ WrapStyle: 0
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default,{FONT_NAME},{FONT_SIZE},&H00FFFFFF,&H000000FF,&H00000000,&HA0000000,0,0,0,0,100,100,1,0,1,4,3,2,40,40,{MARGIN_V},1
+Style: Default,{FONT_NAME},{FONT_SIZE},&H00FFFFFF,&H000000FF,&H00000000,&HA0000000,0,0,0,0,100,100,1,0,1,4,3,{alignment},40,40,{mv},1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text

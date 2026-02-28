@@ -1,23 +1,28 @@
 """
 CLI script to produce lecture-clip reels from pipeline output.
 
+Format is already decided per-script in the pipeline JSON — no need to specify
+format flags here. Just point at the JSON and go.
+
 Usage:
-    # Produce all reels
-    python -m content_generation.scripts.produce_reels -i content_generation/output/pipeline_result.json
+    # Produce all reels from the pipeline
+    py -m content_generation.scripts.produce_reels -i content_generation/output/pipeline_result.json
 
-    # Produce first 3 reels only
-    python -m content_generation.scripts.produce_reels -i content_generation/output/pipeline_result.json --max 3
+    # First 5 only
+    py -m content_generation.scripts.produce_reels -i content_generation/output/pipeline_result.json --max 5
 
-    # Produce specific reels by index
-    python -m content_generation.scripts.produce_reels -i content_generation/output/pipeline_result.json --reels 0 2 5
-
-    # Enable MiniMax AI video for hero visuals
-    python -m content_generation.scripts.produce_reels -i content_generation/output/pipeline_result.json --use-minimax-video
+    # Specific reel indices
+    py -m content_generation.scripts.produce_reels -i content_generation/output/pipeline_result.json --reels 0 2 4
 """
 
 import argparse
 import sys
 import os
+
+if sys.stdout and hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if sys.stderr and hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 from pathlib import Path
 
 _SCRIPT_DIR = Path(__file__).resolve().parent
@@ -33,7 +38,7 @@ _DEFAULT_OUTPUT = str(_PKG_ROOT / "output" / "reels")
 
 def main():
     parser = argparse.ArgumentParser(
-        description="DoomLearn Reel Producer — lecture clip-based vertical reels"
+        description="FocusFeed Reel Producer — produce reels from pipeline JSON"
     )
     parser.add_argument(
         "--input", "-i", required=True,
@@ -51,20 +56,15 @@ def main():
         "--reels", type=int, nargs="+", default=None,
         help="Specific reel indices to produce (0-based)"
     )
-    parser.add_argument(
-        "--use-minimax-video", action="store_true",
-        help="Use MiniMax to generate AI video clips for hero visuals"
-    )
-    parser.add_argument(
-        "--lecture-format", default="zoom",
-        choices=["zoom", "classroom-slides", "classroom", "slides-only"],
-        help="Lecture type: zoom (slides in video), classroom-slides (separate PDF), "
-             "classroom (no slides), slides-only (PDF + AI voiceover, no video)"
-    )
+
+    # --- Optional overrides (rarely needed — pipeline JSON has everything) ---
     parser.add_argument(
         "--slides", default=None,
-        help="Path to slides PDF (for classroom-slides or slides-only format). "
-             "If omitted, uses slides_path from pipeline JSON."
+        help="Override slides PDF path (if different from pipeline JSON)"
+    )
+    parser.add_argument(
+        "--video", default=None,
+        help="Override lecture video path (if different from pipeline JSON)"
     )
 
     args = parser.parse_args()
@@ -73,9 +73,8 @@ def main():
         parser.error(f"Input file not found: {args.input}")
 
     producer = ReelProducer(
-        use_minimax_video=args.use_minimax_video,
-        lecture_format=args.lecture_format,
         slides_pdf=args.slides,
+        video_path=args.video,
     )
 
     produced = producer.produce_from_file(

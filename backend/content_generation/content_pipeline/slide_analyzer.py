@@ -52,6 +52,31 @@ class SlideContent:
         return " — ".join(parts)
 
 
+def detect_pdf_orientation(pdf_path: str | Path) -> str:
+    """Check page 1 of a PDF and return ``"landscape"`` or ``"portrait"``.
+
+    Landscape PDFs are treated as slides; portrait PDFs as notes/documents.
+    """
+    pdf_path = Path(pdf_path)
+    if not pdf_path.exists():
+        raise FileNotFoundError(f"PDF not found: {pdf_path}")
+
+    try:
+        from pypdf import PdfReader
+    except ImportError:
+        raise ImportError("pypdf is required: pip install pypdf")
+
+    reader = PdfReader(str(pdf_path))
+    if not reader.pages:
+        return "portrait"
+
+    page = reader.pages[0]
+    box = page.mediabox
+    width = float(box.width)
+    height = float(box.height)
+    return "landscape" if width > height else "portrait"
+
+
 class SlideAnalyzer:
     """
     Extracts and analyzes content from PDF slides.

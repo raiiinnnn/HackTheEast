@@ -2,12 +2,12 @@
 MiniMax TTS client — generates voiceover audio from text.
 
 Uses the T2A v2 API (non-streaming) to produce MP3 audio files.
-Default voice and settings tuned for engaging, professor-style narration.
 """
 
 from __future__ import annotations
 
 import os
+import re
 from pathlib import Path
 
 try:
@@ -19,11 +19,6 @@ try:
 except ImportError:
     pass
 
-# Defaults tuned for engaging, human-like professor narration
-_DEFAULT_VOICE = "English_expressive_narrator"
-_DEFAULT_SPEED = 1.2
-_DEFAULT_MODEL = "speech-02-hd"
-
 
 class MinimaxTTS:
     """Generate voiceover audio via MiniMax T2A v2."""
@@ -31,10 +26,8 @@ class MinimaxTTS:
     def __init__(self):
         self.api_key = os.getenv("MINIMAX_API_KEY", "")
         self.base_url = os.getenv("MINIMAX_BASE_URL", "https://api.minimax.io")
-        self.model = os.getenv("MINIMAX_TTS_MODEL", _DEFAULT_MODEL)
-        self.voice_id = os.getenv("MINIMAX_VOICE_ID", _DEFAULT_VOICE)
-        raw_speed = os.getenv("MINIMAX_TTS_SPEED", str(_DEFAULT_SPEED))
-        self.speed = max(0.5, min(2.0, float(raw_speed)))
+        self.model = os.getenv("MINIMAX_TTS_MODEL", "speech-02-hd")
+        self.voice_id = os.getenv("MINIMAX_VOICE_ID", "male-qn-qingse")
         self.mock = os.getenv("MINIMAX_MOCK", "false").lower() in ("1", "true", "yes")
 
     @property
@@ -45,7 +38,8 @@ class MinimaxTTS:
         self,
         text: str,
         output_path: str | Path,
-        speed: float | None = None,
+        speed: float = 1.0,
+        voice_id: str = "",
     ) -> Path | None:
         """
         Generate speech audio from text.
@@ -53,7 +47,8 @@ class MinimaxTTS:
         Args:
             text: The narration script to speak (up to 10k chars)
             output_path: Where to save the MP3 file
-            speed: Speech speed multiplier (0.5-2.0). If None, uses MINIMAX_TTS_SPEED or default 1.2.
+            speed: Speech speed multiplier (0.5-2.0)
+            voice_id: Override voice for this call (uses default if empty)
 
         Returns:
             Path to the MP3 file, or None on failure.
@@ -65,15 +60,69 @@ class MinimaxTTS:
         output_path = Path(output_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
-        actual_speed = speed if speed is not None else self.speed
         try:
-            return self._call_api(text[:10000], output_path, actual_speed)
+            return self._call_api(text[:10000], output_path, speed, voice_id=voice_id)
         except Exception as e:
             print(f"    [TTS] Error: {e}")
             return None
 
-    def _call_api(self, text: str, output_path: Path, speed: float) -> Path | None:
+    @staticmethod
+    def _prepare_text(text: str) -> str:
+        """Clean narration text for natural TTS pronunciation."""
+        t = text
+
+        # Strip markdown formatting
+        t = re.sub(r'\*\*(.+?)\*\*', r'\1', t)
+        t = re.sub(r'\*(.+?)\*', r'\1', t)
+        t = re.sub(r'`(.+?)`', r'\1', t)
+
+        # Strip quoted code snippets (e.g. 'int& r1 = j;')
+        t = re.sub(r"'[^']*[;&={}\[\]<>]+[^']*'", '', t)
+        t = re.sub(r'"[^"]*[;&={}\[\]<>]+[^"]*"', '', t)
+
+        # Remove stray C/C++ syntax characters
+        t = re.sub(r'[{}\[\];]', '', t)
+        t = re.sub(r'(?<!\w)&(?!\w)', '', t)
+
+        # Expand common CS / academic abbreviations that confuse TTS
+        _abbrevs = {
+            r'\bOOP\b': 'Object-Oriented Programming',
+            r'\bAPI\b': 'A P I',
+            r'\bAPIs\b': 'A P Is',
+            r'\bUI\b': 'U I',
+            r'\bCSS\b': 'C S S',
+            r'\bHTML\b': 'H T M L',
+            r'\bSQL\b': 'S Q L',
+            r'\bJSON\b': 'Jason',
+            r'\bGUI\b': 'gooey',
+            r'\bC\+\+\b': 'C plus plus',
+            r'\bint\b': 'integer',
+            r'\bbool\b': 'boolean',
+            r'\bstd::': 'standard ',
+            r'\bnullptr\b': 'null pointer',
+            r'\be\.g\.': 'for example',
+            r'\bi\.e\.': 'that is',
+            r'\betc\.': 'etcetera',
+            r'\bvs\.?\b': 'versus',
+        }
+        for pat, repl in _abbrevs.items():
+            t = re.sub(pat, repl, t, flags=re.IGNORECASE)
+
+        # Collapse multiple spaces / newlines into single space
+        t = re.sub(r'\s+', ' ', t).strip()
+
+        # Remove stray bullet characters
+        t = re.sub(r'[•◦▪▸►]', '', t)
+
+        return t
+
+    def _call_api(
+        self, text: str, output_path: Path, speed: float, voice_id: str = "",
+    ) -> Path | None:
         import httpx
+
+        text = self._prepare_text(text)
+        effective_voice = voice_id or self.voice_id
 
         headers = {
             "Authorization": f"Bearer {self.api_key}",
@@ -85,11 +134,13 @@ class MinimaxTTS:
             "text": text,
             "stream": False,
             "language_boost": "English",
+            "text_normalization": True,
             "voice_setting": {
-                "voice_id": self.voice_id,
+                "voice_id": effective_voice,
                 "speed": speed,
                 "vol": 1.0,
                 "pitch": 0,
+                "emotion": "neutral",
             },
             "audio_setting": {
                 "sample_rate": 32000,
@@ -99,7 +150,7 @@ class MinimaxTTS:
             },
         }
 
-        print(f"    [TTS] Generating voice ({len(text)} chars, {self.voice_id}, speed={speed})...",
+        print(f"    [TTS] Generating voice ({len(text)} chars, voice={effective_voice})...",
               end="", flush=True)
 
         with httpx.Client(timeout=60) as client:
