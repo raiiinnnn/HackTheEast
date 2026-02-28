@@ -22,6 +22,7 @@ from app.schemas.auth import (
     AbelianChallengeResponse,
     AbelianVerifyRequest,
     AbelianRestoreRequest,
+    AbelianSignRequest,
 )
 from app.core.security import hash_password, verify_password, create_access_token, get_current_user
 from app.core.config import settings
@@ -58,7 +59,7 @@ async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
 async def login(body: LoginRequest, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(User).where(User.email == body.email))
     user = result.scalar_one_or_none()
-    if not user or not verify_password(body.password, user.hashed_password):
+    if not user or not user.hashed_password or not verify_password(body.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
     token = create_access_token({"sub": str(user.id)})
@@ -69,13 +70,25 @@ async def login(body: LoginRequest, db: AsyncSession = Depends(get_db)):
 
 @router.post("/google", response_model=TokenResponse)
 async def google_auth(body: GoogleAuthRequest, db: AsyncSession = Depends(get_db)):
-    try:
-        idinfo = google_id_token.verify_oauth2_token(
-            body.id_token,
-            google_requests.Request(),
-            settings.GOOGLE_CLIENT_ID,
-        )
-    except ValueError:
+    idinfo = None
+    allowed_client_ids = [
+        cid for cid in [settings.GOOGLE_CLIENT_ID, settings.GOOGLE_IOS_CLIENT_ID] if cid
+    ]
+    if not allowed_client_ids:
+        raise HTTPException(status_code=500, detail="Google OAuth not configured on the server")
+
+    for client_id in allowed_client_ids:
+        try:
+            idinfo = google_id_token.verify_oauth2_token(
+                body.id_token,
+                google_requests.Request(),
+                client_id,
+            )
+            break
+        except ValueError:
+            continue
+
+    if not idinfo:
         raise HTTPException(status_code=401, detail="Invalid Google token")
 
     google_sub = idinfo["sub"]
@@ -135,6 +148,27 @@ async def abelian_restore_keys(body: AbelianRestoreRequest):
             resp.raise_for_status()
         except httpx.HTTPStatusError as e:
             detail = e.response.text if e.response else "Restore failed"
+            raise HTTPException(status_code=400, detail=detail)
+        except httpx.HTTPError:
+            raise HTTPException(status_code=502, detail="Abelian service unavailable")
+    return resp.json()
+
+
+@router.post("/abelian/sign")
+async def abelian_sign(body: AbelianSignRequest):
+    """Proxy to Go service to sign a message with the spend secret key."""
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        try:
+            resp = await client.post(
+                f"{settings.ABELIAN_SERVICE_URL}/sign",
+                json={
+                    "message": body.message,
+                    "spend_secret_key": body.spend_secret_key,
+                },
+            )
+            resp.raise_for_status()
+        except httpx.HTTPStatusError as e:
+            detail = e.response.text if e.response else "Signing failed"
             raise HTTPException(status_code=400, detail=detail)
         except httpx.HTTPError:
             raise HTTPException(status_code=502, detail="Abelian service unavailable")

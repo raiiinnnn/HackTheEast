@@ -8,7 +8,7 @@ import logging
 from typing import Any, Dict
 
 import boto3
-from botocore.exceptions import ClientError
+from botocore.exceptions import ClientError, NoCredentialsError
 from PyPDF2 import PdfReader
 
 from app.core.config import settings
@@ -93,12 +93,13 @@ MAX_RETRIES = 2
 
 
 def _get_bedrock_client():
-    return boto3.client(
-        "bedrock-runtime",
-        region_name=settings.AWS_DEFAULT_REGION,
-        aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-        aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-    )
+    """Build Bedrock client. Uses explicit credentials only when both are set in config;
+    otherwise relies on boto3 default chain (env vars, ~/.aws/credentials, IAM role)."""
+    kwargs = {"region_name": settings.AWS_DEFAULT_REGION or "us-east-1"}
+    if settings.AWS_ACCESS_KEY_ID and settings.AWS_SECRET_ACCESS_KEY:
+        kwargs["aws_access_key_id"] = settings.AWS_ACCESS_KEY_ID
+        kwargs["aws_secret_access_key"] = settings.AWS_SECRET_ACCESS_KEY
+    return boto3.client("bedrock-runtime", **kwargs)
 
 
 def extract_text_from_pdf(pdf_bytes: bytes) -> str:
@@ -189,9 +190,36 @@ async def parse_syllabus_pdf(
                 f"Schema error: {e}. Return ONLY valid JSON matching the exact schema.\n\n"
                 + prompt_text
             )
+        except NoCredentialsError as e:
+            logger.error("Bedrock: no AWS credentials found")
+            raise ValueError(
+                "AWS Bedrock is not configured. Set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY "
+                "in the server .env file (project root)."
+            ) from e
         except ClientError as e:
-            logger.error(f"Bedrock API error: {e}")
-            raise
+            error_code = e.response.get("Error", {}).get("Code", "")
+            logger.error(f"Bedrock API error: {error_code} - {e}")
+            if error_code in ("UnrecognizedClientException", "InvalidSignatureException", "SignatureDoesNotMatch"):
+                raise ValueError(
+                    "AWS credentials are invalid or expired. Set valid AWS_ACCESS_KEY_ID and "
+                    "AWS_SECRET_ACCESS_KEY in the server .env and ensure the IAM user has Bedrock access."
+                ) from e
+            if error_code == "AccessDeniedException":
+                raise ValueError(
+                    "AWS account does not have access to Bedrock. Enable Bedrock in the AWS console "
+                    "and attach a policy with bedrock:InvokeModel."
+                ) from e
+            if error_code == "ValidationException":
+                msg = e.response.get("Error", {}).get("Message", str(e))
+                if "unsupported countries" in msg.lower() or "anthropic" in msg.lower():
+                    raise ValueError(
+                        "Anthropic models are not available in your region. Use an Amazon Nova model instead: "
+                        "set BEDROCK_MODEL_ID=amazon.nova-pro-v1:0 in the server .env and restart the backend."
+                    ) from e
+                raise ValueError(
+                    f"Bedrock model error: {msg}. Check BEDROCK_MODEL_ID in .env (e.g. amazon.nova-pro-v1:0)."
+                ) from e
+            raise ValueError(f"Bedrock API error: {error_code}. Please check server AWS configuration.") from e
         except Exception as e:
             logger.error(f"Unexpected error calling Bedrock: {e}")
             raise

@@ -75,6 +75,20 @@ export async function abelianRegister(
   return data;
 }
 
+export async function abelianSign(
+  message: string,
+  spendSecretKey: string
+): Promise<{ signature: string }> {
+  const { data } = await apiClient.post<{ signature: string }>(
+    "/auth/abelian/sign",
+    {
+      message,
+      spend_secret_key: spendSecretKey,
+    }
+  );
+  return data;
+}
+
 export async function abelianChallenge(
   cryptoAddress: string
 ): Promise<AbelianChallengeResponse> {
