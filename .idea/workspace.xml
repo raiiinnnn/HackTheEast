@@ -4,19 +4,18 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="a1f97705-b605-470a-a21b-577d36541b2d" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/app.json" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/app.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/app/(auth)/login.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/app/(auth)/login.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/app/(auth)/register.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/app/(auth)/register.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/constants/api.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/constants/api.ts" afterDir="false" />
-    </list>
+    <list default="true" id="a1f97705-b605-470a-a21b-577d36541b2d" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="9e99c07c283ea4944e943802b5b524ca12c72084" />
+      </map>
+    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="GitHubPullRequestSearchHistory">{
@@ -46,7 +45,7 @@
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "56cdcbb0",
+    "git-widget-placeholder": "9e99c07c",
     "last_opened_file_path": "/Users/denis/Work/HTE/HTE/HTE-Testing",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
@@ -73,7 +72,7 @@
       <option name="presentableId" value="Default" />
       <updated>1772276723266</updated>
       <workItem from="1772276724581" duration="1261000" />
-      <workItem from="1772278014838" duration="1003000" />
+      <workItem from="1772278014838" duration="1681000" />
     </task>
     <servers />
   </component>
