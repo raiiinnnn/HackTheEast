@@ -1,0 +1,13 @@
+{
+  "reels": [
+    {
+      "file": "reel_00_Array_Name_is_a_Constant_Pointer.mp4",
+      "path": "output\\reels_v2\\reel_00_Array_Name_is_a_Constant_Pointer.mp4"
+    },
+    {
+      "file": "reel_01_Why_Square_Brackets_Work_-_Pointer_Arith.mp4",
+      "path": "output\\reels_v2\\reel_01_Why_Square_Brackets_Work_-_Pointer_Arith.mp4"
+    }
+  ],
+  "count": 2
+}
