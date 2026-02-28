@@ -53,3 +53,7 @@ class AbelianVerifyRequest(BaseModel):
     crypto_address: str
     challenge: str
     signature: str
+
+
+class AbelianRestoreRequest(BaseModel):
+    mnemonic: str

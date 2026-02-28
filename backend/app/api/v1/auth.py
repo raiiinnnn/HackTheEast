@@ -20,6 +20,7 @@ from app.schemas.auth import (
     AbelianChallengeRequest,
     AbelianChallengeResponse,
     AbelianVerifyRequest,
+    AbelianRestoreRequest,
 )
 from app.core.security import hash_password, verify_password, create_access_token, get_current_user
 from app.core.config import settings
@@ -116,6 +117,24 @@ async def abelian_generate():
         try:
             resp = await client.post(f"{settings.ABELIAN_SERVICE_URL}/keys/generate")
             resp.raise_for_status()
+        except httpx.HTTPError:
+            raise HTTPException(status_code=502, detail="Abelian service unavailable")
+    return resp.json()
+
+
+@router.post("/abelian/restore-keys")
+async def abelian_restore_keys(body: AbelianRestoreRequest):
+    """Proxy to Go service to restore keys from a mnemonic phrase."""
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        try:
+            resp = await client.post(
+                f"{settings.ABELIAN_SERVICE_URL}/keys/restore",
+                json={"mnemonic": body.mnemonic},
+            )
+            resp.raise_for_status()
+        except httpx.HTTPStatusError as e:
+            detail = e.response.text if e.response else "Restore failed"
+            raise HTTPException(status_code=400, detail=detail)
         except httpx.HTTPError:
             raise HTTPException(status_code=502, detail="Abelian service unavailable")
     return resp.json()

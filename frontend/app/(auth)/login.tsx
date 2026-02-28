@@ -13,21 +13,23 @@ import {
 import { Link, router } from "expo-router";
 import * as Google from "expo-auth-session/providers/google";
 import * as WebBrowser from "expo-web-browser";
-import * as SecureStore from "expo-secure-store";
 import {
   Colors,
   Spacing,
   FontSize,
   BorderRadius,
 } from "../../src/constants/theme";
-import { GOOGLE_CLIENT_ID } from "../../src/constants/api";
+import { GOOGLE_CLIENT_ID, API_BASE_URL } from "../../src/constants/api";
 import {
   login,
   loginGoogle,
   abelianChallenge,
   abelianVerify,
+  abelianRestoreKeys,
 } from "../../src/api/auth";
 import { useAuthStore } from "../../src/store/auth";
+import { loadWallet, saveWallet } from "../../src/utils/walletStorage";
+import { MnemonicInputModal } from "../../src/components/MnemonicModal";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -37,10 +39,12 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [abelianLoading, setAbelianLoading] = useState(false);
+  const [showRestore, setShowRestore] = useState(false);
+  const [restoreLoading, setRestoreLoading] = useState(false);
   const setToken = useAuthStore((s) => s.setToken);
   const setAbelianAddress = useAuthStore((s) => s.setAbelianAddress);
 
-  const [_request, response, promptAsync] = Google.useIdTokenAuthRequest({
+  const [_request, _response, promptAsync] = Google.useIdTokenAuthRequest({
     clientId: GOOGLE_CLIENT_ID,
   });
 
@@ -83,41 +87,65 @@ export default function LoginScreen() {
     }
   };
 
+  const signInWithWallet = async (address: string, sk: string) => {
+    const challengeRes = await abelianChallenge(address);
+
+    const signResp = await fetch(`${API_BASE_URL}/api/v1/auth/abelian/sign`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: challengeRes.challenge,
+        spend_secret_key: sk,
+      }),
+    }).catch(() => null);
+
+    let signData: { signature: string };
+    if (signResp && signResp.ok) {
+      signData = await signResp.json();
+    } else {
+      const directResp = await fetch("http://localhost:8001/sign", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: challengeRes.challenge,
+          spend_secret_key: sk,
+        }),
+      });
+      signData = await directResp.json();
+    }
+
+    const res = await abelianVerify(
+      address,
+      challengeRes.challenge,
+      signData.signature
+    );
+    setAbelianAddress(address);
+    setToken(res.access_token);
+    router.replace("/(tabs)");
+  };
+
   const handleAbelian = async () => {
     setAbelianLoading(true);
     try {
-      const stored = await SecureStore.getItemAsync("abelian_address");
-      const storedSk = await SecureStore.getItemAsync("abelian_sk");
+      const wallet = await loadWallet();
 
-      if (!stored || !storedSk) {
+      if (!wallet) {
         Alert.alert(
           "No Wallet Found",
-          "You need to create an Abelian wallet first. Go to Sign Up."
+          "You need to create an Abelian wallet first (Sign Up), or restore one from your recovery phrase.",
+          [
+            { text: "OK" },
+            {
+              text: "Restore",
+              onPress: () => setShowRestore(true),
+            },
+          ]
         );
         setAbelianLoading(false);
         return;
       }
 
-      const challengeRes = await abelianChallenge(stored);
-
-      const signResp = await fetch("http://localhost:8001/sign", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: challengeRes.challenge,
-          spend_secret_key: storedSk,
-        }),
-      });
-      const signData = await signResp.json();
-
-      const res = await abelianVerify(
-        stored,
-        challengeRes.challenge,
-        signData.signature
-      );
-      setAbelianAddress(stored);
-      setToken(res.access_token);
-      router.replace("/(tabs)");
+      await signInWithWallet(wallet.address, wallet.sk);
     } catch (e: any) {
       Alert.alert(
         "Abelian sign-in failed",
@@ -125,6 +153,24 @@ export default function LoginScreen() {
       );
     } finally {
       setAbelianLoading(false);
+    }
+  };
+
+  const handleRestore = async (mnemonic: string) => {
+    setRestoreLoading(true);
+    try {
+      const keys = await abelianRestoreKeys(mnemonic);
+      await saveWallet(keys.crypto_address, keys.spend_secret_key, mnemonic);
+      setShowRestore(false);
+
+      await signInWithWallet(keys.crypto_address, keys.spend_secret_key);
+    } catch (e: any) {
+      Alert.alert(
+        "Restore failed",
+        e.response?.data?.detail || e.message || "Invalid mnemonic phrase"
+      );
+    } finally {
+      setRestoreLoading(false);
     }
   };
 
@@ -175,7 +221,11 @@ export default function LoginScreen() {
           </View>
 
           <TouchableOpacity
-            style={[styles.socialButton, styles.googleButton, googleLoading && styles.buttonDisabled]}
+            style={[
+              styles.socialButton,
+              styles.googleButton,
+              googleLoading && styles.buttonDisabled,
+            ]}
             onPress={handleGoogle}
             disabled={googleLoading}
           >
@@ -192,7 +242,11 @@ export default function LoginScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.socialButton, styles.abelianButton, abelianLoading && styles.buttonDisabled]}
+            style={[
+              styles.socialButton,
+              styles.abelianButton,
+              abelianLoading && styles.buttonDisabled,
+            ]}
             onPress={handleAbelian}
             disabled={abelianLoading}
           >
@@ -208,6 +262,15 @@ export default function LoginScreen() {
             )}
           </TouchableOpacity>
 
+          <TouchableOpacity
+            style={styles.restoreLink}
+            onPress={() => setShowRestore(true)}
+          >
+            <Text style={styles.restoreText}>
+              Restore wallet from recovery phrase
+            </Text>
+          </TouchableOpacity>
+
           <Link href="/(auth)/register" asChild>
             <TouchableOpacity style={styles.linkButton}>
               <Text style={styles.linkText}>
@@ -218,6 +281,13 @@ export default function LoginScreen() {
           </Link>
         </View>
       </View>
+
+      <MnemonicInputModal
+        visible={showRestore}
+        onSubmit={handleRestore}
+        onCancel={() => setShowRestore(false)}
+        loading={restoreLoading}
+      />
     </KeyboardAvoidingView>
   );
 }
@@ -319,6 +389,14 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     width: 24,
     textAlign: "center",
+  },
+  restoreLink: {
+    alignItems: "center",
+  },
+  restoreText: {
+    color: Colors.secondary,
+    fontSize: FontSize.sm,
+    textDecorationLine: "underline",
   },
   linkButton: {
     alignItems: "center",
