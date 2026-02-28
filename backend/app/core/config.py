@@ -19,10 +19,13 @@ class Settings(BaseSettings):
     S3_BUCKET_NAME: str = "focusfeed-uploads"
     S3_REGION: str = "us-east-1"
 
-    BACKEND_CORS_ORIGINS: List[str] = ["http://localhost:8081", "http://localhost:19006"]
+    GOOGLE_CLIENT_ID: str = ""
+    ABELIAN_SERVICE_URL: str = "http://localhost:8001"
+
+    BACKEND_CORS_ORIGINS: List[str] = ["http://localhost:8081", "http://localhost:8082", "http://localhost:19006"]
 
     class Config:
-        env_file = ".env"
+        env_file = "../.env"
         case_sensitive = True
         extra = "ignore"
 
