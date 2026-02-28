@@ -1,0 +1,353 @@
+{
+  "metadata": {
+    "video_path": "",
+    "slides_path": "C:\\Users\\raiya\\OneDrive\\Desktop\\HackTheEast\\HTE-Testing\\backend\\content_generation\\input\\review-references-full.pdf",
+    "processing_time_sec": 38.59,
+    "num_transcript_segments": 0,
+    "num_slides": 17,
+    "num_topics": 1,
+    "num_reel_scripts": 1
+  },
+  "transcript_segments": [],
+  "slides": [
+    {
+      "page_num": 1,
+      "title": "COMP2012 Object-Oriented Programming",
+      "raw_text": "COMP2012 Object-Oriented Programming\nand Data Structures\nReview: References\nDr. Desmond Tsoi\nDepartment of Computer Science & Engineering\nThe Hong Kong University of Science and Technology\nHong Kong SAR, China\nRm 3553, desmond@ust.hk COMP2012 (Fall 2022) 1 / 17",
+      "bullet_points": [],
+      "has_diagram": false,
+      "has_formula": false,
+      "diagram_hint": "",
+      "key_terms": [
+        "Object",
+        "Oriented",
+        "Programming",
+        "Data",
+        "Structures",
+        "Review",
+        "References",
+        "Desmond",
+        "Tsoi",
+        "Department",
+        "Computer",
+        "Science",
+        "Engineering",
+        "Hong",
+        "Kong"
+      ]
+    },
+    {
+      "page_num": 2,
+      "title": "What are References?",
+      "raw_text": "What are References?\nA reference is an alternative / another name (alias) for a variable or\nan object\nReference variables are usually used in parameter passing to functions\nRm 3553, desmond@ust.hk COMP2012 (Fall 2022) 2 / 17",
+      "bullet_points": [],
+      "has_diagram": false,
+      "has_formula": false,
+      "diagram_hint": "",
+      "key_terms": [
+        "References",
+        "Reference",
+        "Fall"
+      ]
+    },
+    {
+      "page_num": 3,
+      "title": "Declaration of Reference Variables",
+      "raw_text": "Declaration of Reference Variables\nRecall, the syntax for declaring a reference variable:\n<type>& <variable name> = <variable>;\n// Declare an int variable\nint j = 1; // the value of j is 1\n// Declare a reference variable r, which is another name of j\nint& r = j; // now r = j = 1\n// Assign r to x\nint x = r; // now x = 1\n// As r is just j, r changes to 2 means j changes to 2 as well\nr = 2; // now r = j = 2\nj = 10; // now r = j = 10\nA reference allows indirect manipulation of a variable / object, s",
+      "bullet_points": [],
+      "has_diagram": false,
+      "has_formula": true,
+      "diagram_hint": "",
+      "key_terms": [
+        "Declaration",
+        "Reference",
+        "Variables",
+        "Recall",
+        "Declare",
+        "Assign",
+        "Fall"
+      ]
+    },
+    {
+      "page_num": 4,
+      "title": "Important Points about Reference",
+      "raw_text": "Important Points about Reference\nA reference MUST always bound to a variable / an object (similar to\nconstant pointer)\nIt must therefore be initialized when it is created\nint j = 1;\nint& r1 = j; // ok\nint& r2; // error!\nA reference cannot bound to another object once it initially was\ninitialized to. But what does the following mean?\nint j = 10;\nint& r = j;\nint k = 50;\nr = k; // what does this mean?\nAssignment from a variable, say k, to a reference variable, say r, means r\nget assigned with the v",
+      "bullet_points": [],
+      "has_diagram": false,
+      "has_formula": true,
+      "diagram_hint": "",
+      "key_terms": [
+        "Important",
+        "Points",
+        "Reference",
+        "MUST",
+        "Assignment",
+        "Fall"
+      ]
+    },
+    {
+      "page_num": 5,
+      "title": "The Different Uses of Operator &",
+      "raw_text": "The Different Uses of Operator &\nDo not confuse the use of operator & in declaring reference variable\nversus the use of & as the address of operator for pointer\nExample\nint j;\n// The following statement declares a reference variable\n// \"&\" is a part of reference type\nint& i = j;\n// The following statement is used to get the address\n// of j and assign it to p\nint* p = &j;\nRm 3553, desmond@ust.hk COMP2012 (Fall 2022) 5 / 17",
+      "bullet_points": [],
+      "has_diagram": false,
+      "has_formula": true,
+      "diagram_hint": "",
+      "key_terms": [
+        "Different",
+        "Uses",
+        "Operator",
+        "Example",
+        "Fall"
+      ]
+    },
+    {
+      "page_num": 6,
+      "title": "Questions",
+      "raw_text": "Questions\nThe following is wrong. Why?\nint j;\nint& i = &j;\nThe following is correct. What does it\nmean?\nint j;\nint* p = &j;\nint*& ref = p;\n// a reference of \"int pointer\"\nRm 3553, desmond@ust.hk COMP2012 (Fall 2022) 6 / 17",
+      "bullet_points": [],
+      "has_diagram": false,
+      "has_formula": true,
+      "diagram_hint": "",
+      "key_terms": [
+        "Questions",
+        "Fall"
+      ]
+    },
+    {
+      "page_num": 7,
+      "title": "Example",
+      "raw_text": "Example\n#include <iostream>\nusing namespace std;\nint main() {\nint j = 1;\n// pi is an int pointer initialized to the address of j\nint* pi = &j;\nint*& ref = pi; // ref is a reference variable of type int*\ncout << \"j = \" << j << \", \";\ncout << \"*pi = \" << *pi << \", *ref = \" << *ref << endl;\nint k = 2;\npi = &k;\ncout << \"j = \" << j << \", \";\ncout << \"*pi = \" << *pi << \", *ref = \" << *ref << endl;\nreturn 0;\n}\nOutput:\nj = 1, *pi = 1, *ref = 1\nj = 1, *pi = 2, *ref = 2\nRm 3553, desmond@ust.hk COMP2012 (Fal",
+      "bullet_points": [],
+      "has_diagram": false,
+      "has_formula": true,
+      "diagram_hint": "",
+      "key_terms": [
+        "Example",
+        "Output",
+        "Fall"
+      ]
+    },
+    {
+      "page_num": 8,
+      "title": "Call by Reference",
+      "raw_text": "Call by Reference\nReference arguments are special case of reference variable\n#include <iostream>\nusing namespace std;\nint f(int& i) {\n++i;\nreturn i;\n}\nint main() {\nint j = 7;\ncout << f(j) << endl;\ncout << j << endl;\nreturn 0;\n}\nOutput:\n8\n8\nRm 3553, desmond@ust.hk COMP2012 (Fall 2022) 8 / 17",
+      "bullet_points": [],
+      "has_diagram": false,
+      "has_formula": true,
+      "diagram_hint": "",
+      "key_terms": [
+        "Call",
+        "Reference",
+        "Output",
+        "Fall"
+      ]
+    },
+    {
+      "page_num": 9,
+      "title": "Call by Reference",
+      "raw_text": "Call by Reference\nVariable i is a local variable in\nthe function f. Its type is “int\nreference” and it is created\nwhen f is called\nIn the call f(j), i is created\nsimilarly to the construction:\nint& i = j;\nSo within the function f, i will\nbe an alias of the variable j,\nand i cannot be binded to\nanother variable\nBut every time the function is\ncalled, a new variable i is\ncreated and it can be a reference\nto a different variable / object\nRm 3553, desmond@ust.hk COMP2012 (Fall 2022) 9 / 17",
+      "bullet_points": [],
+      "has_diagram": false,
+      "has_formula": true,
+      "diagram_hint": "",
+      "key_terms": [
+        "Call",
+        "Reference",
+        "Variable",
+        "Fall"
+      ]
+    },
+    {
+      "page_num": 10,
+      "title": "Why Call by Reference?",
+      "raw_text": "Why Call by Reference?\nThere are two reasons:\n1. The function caller wants the\nfunction to be able to change\nthe value of passed arguments\n2. For efficiency:\n▶ If you pass a function\nargument by value, the\nfunction gets a local copy of\nthe argument\n▶ For large objects, copying is\nexpensive; on the other hand,\npassing an object by reference\ndoes not require copying, only\na memory address (since\nreference is similar to pointer)\nRm 3553, desmond@ust.hk COMP2012 (Fall 2022) 10 / 17",
+      "bullet_points": [
+        "The function caller wants the",
+        "For efficiency:"
+      ],
+      "has_diagram": false,
+      "has_formula": false,
+      "diagram_hint": "",
+      "key_terms": [
+        "Call",
+        "Reference",
+        "Fall"
+      ]
+    },
+    {
+      "page_num": 11,
+      "title": "Example",
+      "raw_text": "Example\n#include <iostream>\nusing namespace std;\nvoid swap(char& y, char& z) {\nchar temp = y;\ny = z;\nz = temp;\n}\nint main() {\nchar a = 'y';\nchar b = 'n';\nswap(a, b);\ncout << a << b << endl;\nreturn 0;\n}\nOutput:\nny\nRm 3553, desmond@ust.hk COMP2012 (Fall 2022) 11 / 17",
+      "bullet_points": [],
+      "has_diagram": false,
+      "has_formula": true,
+      "diagram_hint": "",
+      "key_terms": [
+        "Example",
+        "Output",
+        "Fall"
+      ]
+    },
+    {
+      "page_num": 12,
+      "title": "const: References as Function Arguments",
+      "raw_text": "const: References as Function Arguments\nYou can express your intention to leave a reference argument of your\nfunction unchanged by making it const\nThis has two advantages:\n▶ First, if you accidentally try to modify the argument in your function,\nthe compiler will catch the error!\nvoid cbr(int& i) {\ni += 10; // Fine\n}\nvoid cbcr(const int& j) {\nj += 10; // Error!\n}\nRm 3553, desmond@ust.hk COMP2012 (Fall 2022) 12 / 17",
+      "bullet_points": [],
+      "has_diagram": false,
+      "has_formula": true,
+      "diagram_hint": "",
+      "key_terms": [
+        "References",
+        "Function",
+        "Arguments",
+        "First",
+        "Fine",
+        "Error",
+        "Fall"
+      ]
+    },
+    {
+      "page_num": 13,
+      "title": "const: References as Function Arguments (Cont’d)",
+      "raw_text": "const: References as Function Arguments (Cont’d)\nSecond, you can call a function\nthat has a const reference\nparameter with both const and\nnon-const arguments\nConversely, a function that has\na non-const reference parameter\ncan only be called with\nnon-const arguments\n#include <iostream>\nusing namespace std;\nvoid cbr(int& i) {\ncout << i << endl;\n}\nvoid cbcr(const int& i) {\ncout << i << endl;\n}\nint main() {\nint i = 50;\nconst int j = 100;\ncbr(i);\ncbcr(i);\ncbr(j); // Error\ncbcr(j);\nreturn 0;\n}\nRm 3553",
+      "bullet_points": [],
+      "has_diagram": false,
+      "has_formula": true,
+      "diagram_hint": "",
+      "key_terms": [
+        "References",
+        "Function",
+        "Arguments",
+        "Cont",
+        "Second",
+        "Conversely",
+        "Error",
+        "Fall"
+      ]
+    },
+    {
+      "page_num": 14,
+      "title": "Pointer vs. Reference",
+      "raw_text": "Pointer vs. Reference\nA reference can be thought of as a special kind of pointer, but there are 3\nbig differences to remember!\nA pointer can point to nothing (nullptr), but a reference is always\nbound to a variable / object\n▶ No need to check nullptr when using reference ;)\nA pointer can point to different variables / objects at different times\n(through assignments). A reference is always bound to the same\nvariable / object.\n▶ Assignments to a reference do NOT change the variable / object it\nref",
+      "bullet_points": [],
+      "has_diagram": false,
+      "has_formula": false,
+      "diagram_hint": "",
+      "key_terms": [
+        "Pointer",
+        "Reference",
+        "Assignments",
+        "Fall"
+      ]
+    },
+    {
+      "page_num": 15,
+      "title": "Example - Pointers and References",
+      "raw_text": "Example - Pointers and References\n#include <iostream>\nusing namespace std;\nvoid func1(int* p1) { (*pi)++; }\nvoid func2(int& ri) { ri++; }\nint main() {\nint i = 1;\ncout << \"i = \" << i << endl;\n// call using address of i\nfunc1(&i);\ncout << \"i = \" << i << endl;\n// call using i\nfunc2(i);\ncout << \"i = \" << i << endl;\nreturn 0;\n}\nOutput:\ni = 1\ni = 2\ni = 3\nRm 3553, desmond@ust.hk COMP2012 (Fall 2022) 15 / 17",
+      "bullet_points": [],
+      "has_diagram": false,
+      "has_formula": true,
+      "diagram_hint": "",
+      "key_terms": [
+        "Example",
+        "Pointers",
+        "References",
+        "Output",
+        "Fall"
+      ]
+    },
+    {
+      "page_num": 16,
+      "title": "Further Reading",
+      "raw_text": "Further Reading\nRead Chapter 6 & 8 of ”C++ How to Program” or Chapter 3 of\n”C++ Primer” textbook\nRm 3553, desmond@ust.hk COMP2012 (Fall 2022) 16 / 17",
+      "bullet_points": [],
+      "has_diagram": false,
+      "has_formula": false,
+      "diagram_hint": "",
+      "key_terms": [
+        "Further",
+        "Reading",
+        "Read",
+        "Chapter",
+        "Program",
+        "Primer",
+        "Fall"
+      ]
+    },
+    {
+      "page_num": 17,
+      "title": "That’s all!",
+      "raw_text": "That’s all!\nAny question?\nRm 3553, desmond@ust.hk COMP2012 (Fall 2022) 17 / 17",
+      "bullet_points": [],
+      "has_diagram": false,
+      "has_formula": false,
+      "diagram_hint": "",
+      "key_terms": [
+        "Fall"
+      ]
+    }
+  ],
+  "topic_segments": [
+    {
+      "topic_name": "COMP2012 Object-Oriented Programming",
+      "start_sec": 0.0,
+      "end_sec": 60.0,
+      "time_range": "0:00 - 1:00",
+      "duration_sec": 60.0,
+      "transcript_text": "COMP2012 Object-Oriented Programming\nand Data Structures\nReview: References\nDr. Desmond Tsoi\nDepartment of Computer Science & Engineering\nThe Hong Kong University of Science and Technology\nHong Kong SAR, China\nRm 3553, desmond@ust.hk COMP2012 (Fall 2022) 1 / 17",
+      "key_points": [],
+      "related_slide_nums": [
+        1
+      ],
+      "slide_content_summary": "COMP2012 Object-Oriented Programming\nand Data Structures\nReview: References\nDr. Desmond Tsoi\nDepartment of Computer Science & Engineering\nThe Hong Kong University of Science and Technology\nHong Kong S",
+      "visual_elements": []
+    }
+  ],
+  "reel_scripts": [
+    {
+      "topic": "References in C++",
+      "hook": "Ever wondered how variables can share the same memory? Let’s decode C++ references!",
+      "narration_text": "References are like aliases for variables! They must be initialized, unlike pointers. See this? 'int& r1 = j;' binds r1 to j. But beware: using & as an address operator vs. reference declaration is a common trap. Try this quiz: Why is 'int& i = &j;' wrong? Answer: Because &j gives an address, not a variable! References are powerful but need care.",
+      "visual_directions": [
+        {
+          "timestamp_sec": 0.0,
+          "duration_sec": 5.0,
+          "visual_type": "slide",
+          "description": "Show slide 3 with declaration syntax, zoom on 'int& r1 = j;'",
+          "source_reference": "slide 3",
+          "slide_number": 3
+        },
+        {
+          "timestamp_sec": 5.0,
+          "duration_sec": 5.0,
+          "visual_type": "slide",
+          "description": "Highlight slide 4's 'must be initialized' rule",
+          "source_reference": "slide 4",
+          "slide_number": 4
+        },
+        {
+          "timestamp_sec": 10.0,
+          "duration_sec": 5.0,
+          "visual_type": "slide",
+          "description": "Zoom on slide 6's incorrect code: 'int& i = &j;'",
+          "source_reference": "slide 6",
+          "slide_number": 6
+        }
+      ],
+      "target_duration_sec": 30,
+      "source_time_range": "0:00 - 1:00",
+      "key_takeaway": "References are initialized aliases that must bind to valid variables, not addresses.",
+      "quiz_question": "Why is 'int& i = &j;' invalid?",
+      "quiz_choices": [
+        "A) References can't be null",
+        "B) &j returns an address, not a variable",
+        "C) You need to use * for references",
+        "D) It requires a const qualifier"
+      ],
+      "quiz_answer_index": 1,
+      "suggested_caption": "References in C++: Aliases that change everything! #CPlusPlus #ProgrammingTips",
+      "music_mood": "calm"
+    }
+  ]
+}
