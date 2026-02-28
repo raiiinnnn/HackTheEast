@@ -13,9 +13,6 @@ Usage:
 
     # Specific reel indices
     py -m content_generation.scripts.produce_reels -i content_generation/output/pipeline_result.json --reels 0 2 4
-
-    # Force a specific character for character-format reels
-    py -m content_generation.scripts.produce_reels -i content_generation/output/pipeline_result.json --max 1 --characters smeshariki
 """
 
 import argparse
@@ -69,12 +66,6 @@ def main():
         "--video", default=None,
         help="Override lecture video path (if different from pipeline JSON)"
     )
-    parser.add_argument(
-        "--characters", nargs="+", default=None,
-        help="Override character(s) for character-format reels. "
-             "One name = use for all; multiple = round-robin. "
-             "Example: --characters smeshariki"
-    )
 
     args = parser.parse_args()
 
@@ -91,7 +82,6 @@ def main():
         output_dir=args.output,
         max_reels=args.max,
         reel_indices=args.reels,
-        character_override=args.characters,
     )
 
     print(f"\nProduced {len(produced)} reels:")

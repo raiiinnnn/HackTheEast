@@ -1,266 +1,428 @@
 {
   "metadata": {
     "video_path": "",
-    "slides_path": "C:\\Users\\raiya\\OneDrive\\Desktop\\HackTheEast\\HTE-Testing\\backend\\content_generation\\input\\review-references-full.pdf",
-    "processing_time_sec": 38.59,
+    "slides_path": "content_generation/input/10-recursion-full.pdf",
+    "notes_path": "",
+    "processing_time_sec": 46.97,
     "num_transcript_segments": 0,
-    "num_slides": 17,
-    "num_topics": 1,
+    "num_slides": 23,
+    "num_topics": 23,
     "num_reel_scripts": 1
   },
   "transcript_segments": [],
   "slides": [
     {
       "page_num": 1,
-      "title": "COMP2012 Object-Oriented Programming",
-      "raw_text": "COMP2012 Object-Oriented Programming\nand Data Structures\nReview: References\nDr. Desmond Tsoi\nDepartment of Computer Science & Engineering\nThe Hong Kong University of Science and Technology\nHong Kong SAR, China\nRm 3553, desmond@ust.hk COMP2012 (Fall 2022) 1 / 17",
+      "title": "COMP 1023 Introduction to Python Programming",
+      "raw_text": "COMP 1023 Introduction to Python Programming\nRecursion\nDr. James Cheung, Dr. Wilfred Ng, Dr. Desmond Tsoi\nDepartment of Computer Science & Engineering\nThe Hong Kong University of Science and Technology, Hong Kong SAR, China\n",
       "bullet_points": [],
       "has_diagram": false,
       "has_formula": false,
       "diagram_hint": "",
       "key_terms": [
-        "Object",
-        "Oriented",
+        "COMP",
+        "Introduction",
+        "Python",
         "Programming",
-        "Data",
-        "Structures",
-        "Review",
-        "References",
+        "Recursion",
+        "James",
+        "Cheung",
+        "Wilfred",
         "Desmond",
         "Tsoi",
         "Department",
         "Computer",
         "Science",
         "Engineering",
-        "Hong",
-        "Kong"
+        "Hong"
       ]
     },
     {
       "page_num": 2,
-      "title": "What are References?",
-      "raw_text": "What are References?\nA reference is an alternative / another name (alias) for a variable or\nan object\nReference variables are usually used in parameter passing to functions\nRm 3553, desmond@ust.hk COMP2012 (Fall 2022) 2 / 17",
+      "title": "Introduction",
+      "raw_text": "Introduction\nRecursion is a technique that leads to elegant solutions for\nproblems that are difficult to solve using simple loops.\nIt is the process of defining a solution to a problem in terms\nof a simpler version of itself.\nMany natural phenomena exhibit recursion.\nRecursive functions are functions that call themselves. They\nconsist of two parts: the base case(s) and the recursive\ncase(s).\nThe base cases are the conditions that stop the recursion.\nThe recursive cases are the parts in which the",
       "bullet_points": [],
       "has_diagram": false,
       "has_formula": false,
       "diagram_hint": "",
       "key_terms": [
-        "References",
-        "Reference",
-        "Fall"
+        "Introduction",
+        "Recursion",
+        "Many",
+        "Recursive",
+        "COMP",
+        "Spring"
       ]
     },
     {
       "page_num": 3,
-      "title": "Declaration of Reference Variables",
-      "raw_text": "Declaration of Reference Variables\nRecall, the syntax for declaring a reference variable:\n<type>& <variable name> = <variable>;\n// Declare an int variable\nint j = 1; // the value of j is 1\n// Declare a reference variable r, which is another name of j\nint& r = j; // now r = j = 1\n// Assign r to x\nint x = r; // now x = 1\n// As r is just j, r changes to 2 means j changes to 2 as well\nr = 2; // now r = j = 2\nj = 10; // now r = j = 10\nA reference allows indirect manipulation of a variable / object, s",
+      "title": "The Handshake Problem",
+      "raw_text": "The Handshake Problem\nProblem Statement\nThere arenpeople in the room. If each person shakes hands once with every other person, what will\nthe total number of handshakes be?\n1 person (A): 0 handshakes.\n2 people (A and B): 1 handshake.\nA\n B\n3 people (A, B, and C):\nA\n B, A\n C, B\n C\n4 people (A, B, C, and D):\nA\n B, A\n C, A\n D\nB\n C, B\n D, C\n D\n{thjcheung, wng, desmond}@ust.hk COMP 1023 (Spring 2026) 3 / 23",
       "bullet_points": [],
       "has_diagram": false,
-      "has_formula": true,
+      "has_formula": false,
       "diagram_hint": "",
       "key_terms": [
-        "Declaration",
-        "Reference",
-        "Variables",
-        "Recall",
-        "Declare",
-        "Assign",
-        "Fall"
+        "Handshake",
+        "Problem",
+        "Statement",
+        "COMP",
+        "Spring"
       ]
     },
     {
       "page_num": 4,
-      "title": "Important Points about Reference",
-      "raw_text": "Important Points about Reference\nA reference MUST always bound to a variable / an object (similar to\nconstant pointer)\nIt must therefore be initialized when it is created\nint j = 1;\nint& r1 = j; // ok\nint& r2; // error!\nA reference cannot bound to another object once it initially was\ninitialized to. But what does the following mean?\nint j = 10;\nint& r = j;\nint k = 50;\nr = k; // what does this mean?\nAssignment from a variable, say k, to a reference variable, say r, means r\nget assigned with the v",
+      "title": "The Handshake Problem",
+      "raw_text": "The Handshake Problem\nThere is a trick to find the total number of handshakes:\nIf there are 2 people, there is only 1 handshake.\nIf there are 3 people, treat it as having 1 more person added to the 2 people, resulting in 2\nextra handshakes.\nIf there are 4 people, treat it as having 1 more person added to the 3 people, resulting in 3\nextra handshakes.\nYou can generalize the total number into a formula.\nLeth(n) be the total number of handshakes amongnpeople:\nh(1) = 0 (Base case)\nh(2) =h(1) + 1 = 0",
       "bullet_points": [],
       "has_diagram": false,
       "has_formula": true,
       "diagram_hint": "",
       "key_terms": [
-        "Important",
-        "Points",
-        "Reference",
-        "MUST",
-        "Assignment",
-        "Fall"
+        "Handshake",
+        "Problem",
+        "Leth",
+        "Base",
+        "General",
+        "COMP",
+        "Spring"
       ]
     },
     {
       "page_num": 5,
-      "title": "The Different Uses of Operator &",
-      "raw_text": "The Different Uses of Operator &\nDo not confuse the use of operator & in declaring reference variable\nversus the use of & as the address of operator for pointer\nExample\nint j;\n// The following statement declares a reference variable\n// \"&\" is a part of reference type\nint& i = j;\n// The following statement is used to get the address\n// of j and assign it to p\nint* p = &j;\nRm 3553, desmond@ust.hk COMP2012 (Fall 2022) 5 / 17",
+      "title": "The Handshake Problem",
+      "raw_text": "The Handshake Problem\n# Filename: handshake.py\ndef handshake(n: int) -> int:\nif n <= 1:# Base case\nreturn 0# No one to shake hands\nreturn handshake(n-1) + (n-1)# General case\ndef main() -> None:\nfor i in range(5):\nprint(f\"{i} Person: {handshake(i)} handshake(s)\")\nif __name__ == \"__main__\":\nmain()\nOutput:\n0 Person: 0 handshake(s)\n1 Person: 0 handshake(s)\n2 Person: 1 handshake(s)\n3 Person: 3 handshake(s)\n4 Person: 6 handshake(s)\n{thjcheung, wng, desmond}@ust.hk COMP 1023 (Spring 2026) 5 / 23",
       "bullet_points": [],
       "has_diagram": false,
       "has_formula": true,
       "diagram_hint": "",
       "key_terms": [
-        "Different",
-        "Uses",
-        "Operator",
-        "Example",
-        "Fall"
+        "Handshake",
+        "Problem",
+        "Filename",
+        "Base",
+        "General",
+        "None",
+        "Person",
+        "Output",
+        "COMP",
+        "Spring"
       ]
     },
     {
       "page_num": 6,
-      "title": "Questions",
-      "raw_text": "Questions\nThe following is wrong. Why?\nint j;\nint& i = &j;\nThe following is correct. What does it\nmean?\nint j;\nint* p = &j;\nint*& ref = p;\n// a reference of \"int pointer\"\nRm 3553, desmond@ust.hk COMP2012 (Fall 2022) 6 / 17",
+      "title": "General Structure of Recursive Function",
+      "raw_text": "General Structure of Recursive Function\nThe recursive function is implemented using anifor anif-elsestatement that leads to\ndifferent cases.\nOne or more base cases (the simplest cases) are used to stop recursion.\nEvery recursive call reduces the original problem, bringing it increasingly closer to a base\ncase until it becomes that case.\ndef <recursive_function_name>(<parameter list>):\n# Base case: condition to stop recursion\nif <base_case_condition>:\nreturn <base_case_value>\n# General case: call",
       "bullet_points": [],
       "has_diagram": false,
-      "has_formula": true,
+      "has_formula": false,
       "diagram_hint": "",
       "key_terms": [
-        "Questions",
-        "Fall"
+        "General",
+        "Structure",
+        "Recursive",
+        "Function",
+        "Every",
+        "Base",
+        "COMP",
+        "Spring"
       ]
     },
     {
       "page_num": 7,
-      "title": "Example",
-      "raw_text": "Example\n#include <iostream>\nusing namespace std;\nint main() {\nint j = 1;\n// pi is an int pointer initialized to the address of j\nint* pi = &j;\nint*& ref = pi; // ref is a reference variable of type int*\ncout << \"j = \" << j << \", \";\ncout << \"*pi = \" << *pi << \", *ref = \" << *ref << endl;\nint k = 2;\npi = &k;\ncout << \"j = \" << j << \", \";\ncout << \"*pi = \" << *pi << \", *ref = \" << *ref << endl;\nreturn 0;\n}\nOutput:\nj = 1, *pi = 1, *ref = 1\nj = 1, *pi = 2, *ref = 2\nRm 3553, desmond@ust.hk COMP2012 (Fal",
+      "title": "Factorial Problem",
+      "raw_text": "Factorial Problem\nThe factorial ofnis defined asn! =n×(n−1)!,\nwherenis a non-negative integer.\nLetf(n) representn!; it is computed as follows:\nf(n) =\n(\nn×f(n−1),ifn>0\n1,ifn= 0\n# Filename: factorial_recursive.py\ndef factorial(n: int) -> int:\nif n == 0:# Base case\nreturn 1\nreturn n * factorial(n - 1)# General case\ndef main() -> None:\nfor i in range(6):\nprint(f\"{i}! = {factorial(i)}\")\nif __name__ == \"__main__\": main()\nOutput:\n0! = 1\n1! = 1\n2! = 2\n3! = 6\n4! = 24\n5! = 120\n{thjcheung, wng, desmond}@us",
       "bullet_points": [],
       "has_diagram": false,
       "has_formula": true,
       "diagram_hint": "",
       "key_terms": [
-        "Example",
+        "Factorial",
+        "Problem",
+        "Letf",
+        "Filename",
+        "Base",
+        "General",
+        "None",
         "Output",
-        "Fall"
+        "COMP",
+        "Spring"
       ]
     },
     {
       "page_num": 8,
-      "title": "Call by Reference",
-      "raw_text": "Call by Reference\nReference arguments are special case of reference variable\n#include <iostream>\nusing namespace std;\nint f(int& i) {\n++i;\nreturn i;\n}\nint main() {\nint j = 7;\ncout << f(j) << endl;\ncout << j << endl;\nreturn 0;\n}\nOutput:\n8\n8\nRm 3553, desmond@ust.hk COMP2012 (Fall 2022) 8 / 17",
+      "title": "Factorial Problem - Demonstration",
+      "raw_text": "Factorial Problem - Demonstration\ndef factorial(n: int) -> int:\nif n == 0:# Base case\nreturn 1\nreturn n * factorial(n - 1)# General case\nfactorial(3):\n3 == 0 ? No\nfac(3) = 3 * fac(2)\nfac(2):\n2 == 0 ? No\nfac(2) = 2 * fac(1)\nfac(1):\n1 == 0 ? No\nfac(1) = 1 * fac(0)\nfac(0):\n0 == 0 ? Yes\nreturn 1\nfac(1) = 1 * 1\nreturn 1\nfac(2) = 2 * 1 = 2\nreturn 2\nfac(3) = 3 * 2 = 6\nreturn 6\nfac(3) has the value 6\n{thjcheung, wng, desmond}@ust.hk COMP 1023 (Spring 2026) 8 / 23",
       "bullet_points": [],
       "has_diagram": false,
       "has_formula": true,
       "diagram_hint": "",
       "key_terms": [
-        "Call",
-        "Reference",
-        "Output",
-        "Fall"
+        "Factorial",
+        "Problem",
+        "Demonstration",
+        "Base",
+        "General",
+        "COMP",
+        "Spring"
       ]
     },
     {
       "page_num": 9,
-      "title": "Call by Reference",
-      "raw_text": "Call by Reference\nVariable i is a local variable in\nthe function f. Its type is “int\nreference” and it is created\nwhen f is called\nIn the call f(j), i is created\nsimilarly to the construction:\nint& i = j;\nSo within the function f, i will\nbe an alias of the variable j,\nand i cannot be binded to\nanother variable\nBut every time the function is\ncalled, a new variable i is\ncreated and it can be a reference\nto a different variable / object\nRm 3553, desmond@ust.hk COMP2012 (Fall 2022) 9 / 17",
+      "title": "Factorial Problem",
+      "raw_text": "Factorial Problem\nIt is simpler and more efficient to implement the factorial function using a loop. However,\nwe use the recursive factorial function here to demonstrate the concept of recursion.\ndef factorial(n: int) -> int:\nif n == 0:# Base case\nreturn 1\nreturn n * factorial(n - 1)# General case\ndef factorial(n: int) -> int:\nproduct: int = 1\nwhile n > 0:\nproduct *= n\nn -= 1\nreturn product\nFor certain problems, a recursive solution often leads to short and elegant code.\n{thjcheung, wng, desmond",
       "bullet_points": [],
       "has_diagram": false,
       "has_formula": true,
       "diagram_hint": "",
       "key_terms": [
-        "Call",
-        "Reference",
-        "Variable",
-        "Fall"
+        "Factorial",
+        "Problem",
+        "Base",
+        "General",
+        "COMP",
+        "Spring"
       ]
     },
     {
       "page_num": 10,
-      "title": "Why Call by Reference?",
-      "raw_text": "Why Call by Reference?\nThere are two reasons:\n1. The function caller wants the\nfunction to be able to change\nthe value of passed arguments\n2. For efficiency:\n▶ If you pass a function\nargument by value, the\nfunction gets a local copy of\nthe argument\n▶ For large objects, copying is\nexpensive; on the other hand,\npassing an object by reference\ndoes not require copying, only\na memory address (since\nreference is similar to pointer)\nRm 3553, desmond@ust.hk COMP2012 (Fall 2022) 10 / 17",
+      "title": "Fibonacci’s Bunnies Problem",
+      "raw_text": "Fibonacci’s Bunnies Problem\nEach new pair of bunnies becomes fertile at the age of one month.\nEach pair of fertile bunnies produces a new pair of offspring every month.\nNone of the bunnies die during this time.\nInitially, God creates a pair of bunnies (let’s call them A and B).[1 pair]\nAfter 1 month, the pair of bunnies becomes fertile.[1 pair]\nAfter 2 months, A and B produce a new pair of bunnies (let’s call them C and D). So there will be\n2 pairs of bunnies (A, B and C, D).[2 pairs]\nAfter 3 mo",
+      "bullet_points": [],
+      "has_diagram": false,
+      "has_formula": false,
+      "diagram_hint": "",
+      "key_terms": [
+        "Fibonacci",
+        "Bunnies",
+        "Problem",
+        "None",
+        "Initially",
+        "Question",
+        "Afternmonths",
+        "COMP",
+        "Spring"
+      ]
+    },
+    {
+      "page_num": 11,
+      "title": "Fibonacci’s Bunnies",
+      "raw_text": "Fibonacci’s Bunnies\nThe sequence (1, 1, 2, 3, 5, 8, ...) is called the Fibonacci sequence, proposed by Leonardo\nFibonacci in 1202 inThe Book of the Abacus. It is believed to model nature to a certain\nextent, such as Kepler’s observation of leaves and flowers in 1611.\nFibonacci sequence:\n1, 1, 2, 3, 5, 8, 13, 21, 34, ...\nwhere each number is the sum of the two preceding numbers.\n{thjcheung, wng, desmond}@ust.hk COMP 1023 (Spring 2026) 11 / 23",
+      "bullet_points": [],
+      "has_diagram": false,
+      "has_formula": false,
+      "diagram_hint": "",
+      "key_terms": [
+        "Fibonacci",
+        "Bunnies",
+        "Leonardo",
+        "Book",
+        "Abacus",
+        "Kepler",
+        "COMP",
+        "Spring"
+      ]
+    },
+    {
+      "page_num": 12,
+      "title": "Fibonacci’s Bunnies Problem",
+      "raw_text": "Fibonacci’s Bunnies Problem\nRecursive definition:\nLetF(n) be the number of pairs of bunnies afternmonths; it is computed as follows:\nF(n) =\n\n\n\n1 ifn= 0 (Number of pairs of bunnies after 0 months)\n1 ifn= 1 (Number of pairs of bunnies after 1 month)\nF(n−1) +F(n−2) ifn≥2\n{thjcheung, wng, desmond}@ust.hk COMP 1023 (Spring 2026) 12 / 23",
+      "bullet_points": [],
+      "has_diagram": false,
+      "has_formula": true,
+      "diagram_hint": "",
+      "key_terms": [
+        "Fibonacci",
+        "Bunnies",
+        "Problem",
+        "Recursive",
+        "LetF",
+        "Number",
+        "COMP",
+        "Spring"
+      ]
+    },
+    {
+      "page_num": 13,
+      "title": "Fibonacci’s Bunnies",
+      "raw_text": "Fibonacci’s Bunnies\n# Filename: fib.py\ndef fib(n: int) -> int:\nif n == 0 or n == 1:# Base cases\nreturn 1\nreturn fib(n - 1) + fib(n - 2)# Recursive case\ndef main() -> None:\nm: int = int(input(\"Enter month: \"))\nnum_bunnies: int = fib(m)\nprint(f\"The number of pairs of bunnies after {m} \\\nmonth(s) is equal to {num_bunnies} pair(s)\")\nif __name__ == \"__main__\": main()\nOutput:\nEnter month:5\nThe number of pairs of bunnies after 5 month(s) is equal to 8 pair(s)\nEnter month:10\nThe number of pairs of bunni",
+      "bullet_points": [],
+      "has_diagram": false,
+      "has_formula": true,
+      "diagram_hint": "",
+      "key_terms": [
+        "Fibonacci",
+        "Bunnies",
+        "Filename",
+        "Base",
+        "Recursive",
+        "None",
+        "Enter",
+        "Output",
+        "COMP",
+        "Spring"
+      ]
+    },
+    {
+      "page_num": 14,
+      "title": "Fibonacci’s Bunnies",
+      "raw_text": "Fibonacci’s Bunnies\nCalculating fib(4) using recursion:\nMany intermediate steps are re-calculated.\n{thjcheung, wng, desmond}@ust.hk COMP 1023 (Spring 2026) 14 / 23",
+      "bullet_points": [],
+      "has_diagram": false,
+      "has_formula": false,
+      "diagram_hint": "",
+      "key_terms": [
+        "Fibonacci",
+        "Bunnies",
+        "Calculating",
+        "Many",
+        "COMP",
+        "Spring"
+      ]
+    },
+    {
+      "page_num": 15,
+      "title": "Recursion and Loop",
+      "raw_text": "Recursion and Loop\nBoth recursion and looping are used to perform repetitive tasks in programming.\nThey can be employed to solve the same problems, often yielding the same results,\nthough the approach and implementation differ.\nComparison:\nLoop Recursion\nInitialization Initialize variables before the loop. Pass initial values as parameters.\nCondition Check a condition at the beginning\nor end of each iteration. Base case checks to stop further calls.\nIteration/\nRecursion Update variables within t",
+      "bullet_points": [],
+      "has_diagram": false,
+      "has_formula": false,
+      "diagram_hint": "",
+      "key_terms": [
+        "Recursion",
+        "Loop",
+        "Both",
+        "Comparison",
+        "Initialization",
+        "Initialize",
+        "Pass",
+        "Condition",
+        "Check",
+        "Base",
+        "Iteration",
+        "Update",
+        "Call",
+        "Termination",
+        "Exit"
+      ]
+    },
+    {
+      "page_num": 16,
+      "title": "Recursive Stack Overflow and Its Handling",
+      "raw_text": "Recursive Stack Overflow and Its Handling\nStack overflow occurs when a recursive function exceeds the maximum call stack size.\nCan lead to a ‘RecursionError’ in Python.\nStrategies to Handle Stack Overflow:\nBase Case:\nEnsure that the base case is correctly defined and reachable.\nExample: In a factorial function, ensure you return 1 whenn= 0.\nTail Recursion:\nTail recursion is a specific type of recursion where the recursive call is the last operation in the\nfunction. This means that there is no ad",
+      "bullet_points": [],
+      "has_diagram": false,
+      "has_formula": true,
+      "diagram_hint": "",
+      "key_terms": [
+        "Recursive",
+        "Stack",
+        "Overflow",
+        "Handling",
+        "RecursionError",
+        "Python",
+        "Strategies",
+        "Handle",
+        "Base",
+        "Case",
+        "Ensure",
+        "Example",
+        "Tail",
+        "Recursion",
+        "Iterative"
+      ]
+    },
+    {
+      "page_num": 17,
+      "title": "Recursion",
+      "raw_text": "Recursion\nRecursion enables you to create an intuitive, straightforward, and simple solution to a\nproblem. However, there are trade-offs associated with its use:\nCalling a function consumes more time and memory than adjusting a loop counter.\nHigh-performance applications (such as graphics-intensive games or simulations of nuclear\nexplosions) rarely use recursion.\nIn less demanding applications, recursion can be an attractive alternative to iteration (for\nthe right problems!).\n{thjcheung, wng, de",
+      "bullet_points": [],
+      "has_diagram": true,
+      "has_formula": false,
+      "diagram_hint": "High-performance applications (such as graphics-intensive games or simulations o",
+      "key_terms": [
+        "Recursion",
+        "Calling",
+        "High",
+        "COMP",
+        "Spring"
+      ]
+    },
+    {
+      "page_num": 18,
+      "title": "Caution with Loops and Recursion",
+      "raw_text": "Caution with Loops and Recursion\nIf we use a loop, we must be careful not to create an infinite loop by accident:\nresult = 1\nwhile result > 0:\n...\nresult += 1# Oops!\nSimilarly, if we use recursion, we must be careful not to create an infinite chain of\nfunction calls:\ndef factorial(n: int) -> int:\nreturn n * factorial(n - 1)# No base case (Oops!)\n# ---------------------------------------------------------\ndef factorial(n: int) -> int:\nif n == 1:\nreturn 1\nreturn n * factorial(n + 1)# factorial(n +",
+      "bullet_points": [],
+      "has_diagram": false,
+      "has_formula": true,
+      "diagram_hint": "",
+      "key_terms": [
+        "Caution",
+        "Loops",
+        "Recursion",
+        "Oops",
+        "Similarly",
+        "COMP",
+        "Spring"
+      ]
+    },
+    {
+      "page_num": 19,
+      "title": "Conclusion",
+      "raw_text": "Conclusion\nRecursion is one way to decompose a task into smaller subtasks.\nAt least one of the subtasks is a simpler example of the same task:\nWe must always ensure the following when designing recursive functions:\nA recursive function must contain at least one non-recursive branch (i.e., base case).\nThe recursive calls must eventually lead to a non-recursive branch.\nAn example is the factorial function:\nn! =n×(n−1)! (Simpler subtask is (n−1)!)\n1! = 1 (The simplest task isn= 1)\n{thjcheung, wng, ",
+      "bullet_points": [],
+      "has_diagram": false,
+      "has_formula": true,
+      "diagram_hint": "",
+      "key_terms": [
+        "Conclusion",
+        "Recursion",
+        "Simpler",
+        "COMP",
+        "Spring"
+      ]
+    },
+    {
+      "page_num": 20,
+      "title": "Key Terms",
+      "raw_text": "Key Terms\nbase case\ninfinite recursion\nrecursive function\nstopping condition\n{thjcheung, wng, desmond}@ust.hk COMP 1023 (Spring 2026) 20 / 23",
+      "bullet_points": [],
+      "has_diagram": false,
+      "has_formula": false,
+      "diagram_hint": "",
+      "key_terms": [
+        "Terms",
+        "COMP",
+        "Spring"
+      ]
+    },
+    {
+      "page_num": 21,
+      "title": "Review Questions",
+      "raw_text": "Review Questions\nFill in the blanks in each of the following sentences about the Python environment.\n1. A is one that directly or indirectly invokes itself. For a\nto terminate, there must be one or more .\n2. Recursion is an alternative form of program control. It is essentially repetition without a\nloop control. It can be used to write simple, clear solutions for inherently recursive\nproblems that would otherwise be .\n3. Recursion bears substantial . Each time the program calls a function,\nthe s",
       "bullet_points": [
-        "The function caller wants the",
-        "For efficiency:"
+        "A is one that directly or indirectly invokes itself. For a",
+        "Recursion is an alternative form of program control. It is essentially repetition without a",
+        "Recursion bears substantial . Each time the program calls a function,"
       ],
       "has_diagram": false,
       "has_formula": false,
       "diagram_hint": "",
       "key_terms": [
-        "Call",
-        "Reference",
-        "Fall"
+        "Review",
+        "Questions",
+        "Fill",
+        "Python",
+        "Recursion",
+        "Answer",
+        "COMP",
+        "Spring"
       ]
     },
     {
-      "page_num": 11,
-      "title": "Example",
-      "raw_text": "Example\n#include <iostream>\nusing namespace std;\nvoid swap(char& y, char& z) {\nchar temp = y;\ny = z;\nz = temp;\n}\nint main() {\nchar a = 'y';\nchar b = 'n';\nswap(a, b);\ncout << a << b << endl;\nreturn 0;\n}\nOutput:\nny\nRm 3553, desmond@ust.hk COMP2012 (Fall 2022) 11 / 17",
-      "bullet_points": [],
-      "has_diagram": false,
-      "has_formula": true,
-      "diagram_hint": "",
-      "key_terms": [
-        "Example",
-        "Output",
-        "Fall"
-      ]
-    },
-    {
-      "page_num": 12,
-      "title": "const: References as Function Arguments",
-      "raw_text": "const: References as Function Arguments\nYou can express your intention to leave a reference argument of your\nfunction unchanged by making it const\nThis has two advantages:\n▶ First, if you accidentally try to modify the argument in your function,\nthe compiler will catch the error!\nvoid cbr(int& i) {\ni += 10; // Fine\n}\nvoid cbcr(const int& j) {\nj += 10; // Error!\n}\nRm 3553, desmond@ust.hk COMP2012 (Fall 2022) 12 / 17",
-      "bullet_points": [],
-      "has_diagram": false,
-      "has_formula": true,
-      "diagram_hint": "",
-      "key_terms": [
-        "References",
-        "Function",
-        "Arguments",
-        "First",
-        "Fine",
-        "Error",
-        "Fall"
-      ]
-    },
-    {
-      "page_num": 13,
-      "title": "const: References as Function Arguments (Cont’d)",
-      "raw_text": "const: References as Function Arguments (Cont’d)\nSecond, you can call a function\nthat has a const reference\nparameter with both const and\nnon-const arguments\nConversely, a function that has\na non-const reference parameter\ncan only be called with\nnon-const arguments\n#include <iostream>\nusing namespace std;\nvoid cbr(int& i) {\ncout << i << endl;\n}\nvoid cbcr(const int& i) {\ncout << i << endl;\n}\nint main() {\nint i = 50;\nconst int j = 100;\ncbr(i);\ncbcr(i);\ncbr(j); // Error\ncbcr(j);\nreturn 0;\n}\nRm 3553",
-      "bullet_points": [],
-      "has_diagram": false,
-      "has_formula": true,
-      "diagram_hint": "",
-      "key_terms": [
-        "References",
-        "Function",
-        "Arguments",
-        "Cont",
-        "Second",
-        "Conversely",
-        "Error",
-        "Fall"
-      ]
-    },
-    {
-      "page_num": 14,
-      "title": "Pointer vs. Reference",
-      "raw_text": "Pointer vs. Reference\nA reference can be thought of as a special kind of pointer, but there are 3\nbig differences to remember!\nA pointer can point to nothing (nullptr), but a reference is always\nbound to a variable / object\n▶ No need to check nullptr when using reference ;)\nA pointer can point to different variables / objects at different times\n(through assignments). A reference is always bound to the same\nvariable / object.\n▶ Assignments to a reference do NOT change the variable / object it\nref",
-      "bullet_points": [],
-      "has_diagram": false,
-      "has_formula": false,
-      "diagram_hint": "",
-      "key_terms": [
-        "Pointer",
-        "Reference",
-        "Assignments",
-        "Fall"
-      ]
-    },
-    {
-      "page_num": 15,
-      "title": "Example - Pointers and References",
-      "raw_text": "Example - Pointers and References\n#include <iostream>\nusing namespace std;\nvoid func1(int* p1) { (*pi)++; }\nvoid func2(int& ri) { ri++; }\nint main() {\nint i = 1;\ncout << \"i = \" << i << endl;\n// call using address of i\nfunc1(&i);\ncout << \"i = \" << i << endl;\n// call using i\nfunc2(i);\ncout << \"i = \" << i << endl;\nreturn 0;\n}\nOutput:\ni = 1\ni = 2\ni = 3\nRm 3553, desmond@ust.hk COMP2012 (Fall 2022) 15 / 17",
-      "bullet_points": [],
-      "has_diagram": false,
-      "has_formula": true,
-      "diagram_hint": "",
-      "key_terms": [
-        "Example",
-        "Pointers",
-        "References",
-        "Output",
-        "Fall"
-      ]
-    },
-    {
-      "page_num": 16,
+      "page_num": 22,
       "title": "Further Reading",
-      "raw_text": "Further Reading\nRead Chapter 6 & 8 of ”C++ How to Program” or Chapter 3 of\n”C++ Primer” textbook\nRm 3553, desmond@ust.hk COMP2012 (Fall 2022) 16 / 17",
+      "raw_text": "Further Reading\nRead Chapter 15 of “Introduction to Python Programming and Data Structures”\ntextbook.\n{thjcheung, wng, desmond}@ust.hk COMP 1023 (Spring 2026) 22 / 23",
       "bullet_points": [],
       "has_diagram": false,
       "has_formula": false,
@@ -270,51 +432,392 @@
         "Reading",
         "Read",
         "Chapter",
-        "Program",
-        "Primer",
-        "Fall"
+        "Introduction",
+        "Python",
+        "Programming",
+        "Data",
+        "Structures",
+        "COMP",
+        "Spring"
       ]
     },
     {
-      "page_num": 17,
+      "page_num": 23,
       "title": "That’s all!",
-      "raw_text": "That’s all!\nAny question?\nRm 3553, desmond@ust.hk COMP2012 (Fall 2022) 17 / 17",
+      "raw_text": "That’s all!\nAny questions?\n",
       "bullet_points": [],
-      "has_diagram": false,
+      "has_diagram": true,
       "has_formula": false,
-      "diagram_hint": "",
-      "key_terms": [
-        "Fall"
-      ]
+      "diagram_hint": "slide appears to be mostly visual/diagram",
+      "key_terms": []
     }
   ],
   "topic_segments": [
     {
-      "topic_name": "COMP2012 Object-Oriented Programming",
+      "topic_name": "COMP 1023 Introduction to Python Programming",
       "start_sec": 0.0,
       "end_sec": 60.0,
       "time_range": "0:00 - 1:00",
       "duration_sec": 60.0,
-      "transcript_text": "COMP2012 Object-Oriented Programming\nand Data Structures\nReview: References\nDr. Desmond Tsoi\nDepartment of Computer Science & Engineering\nThe Hong Kong University of Science and Technology\nHong Kong SAR, China\nRm 3553, desmond@ust.hk COMP2012 (Fall 2022) 1 / 17",
+      "transcript_text": "COMP 1023 Introduction to Python Programming\nRecursion\nDr. James Cheung, Dr. Wilfred Ng, Dr. Desmond Tsoi\nDepartment of Computer Science & Engineering\nThe Hong Kong University of Science and Technology, Hong Kong SAR, China\n",
       "key_points": [],
       "related_slide_nums": [
         1
       ],
-      "slide_content_summary": "COMP2012 Object-Oriented Programming\nand Data Structures\nReview: References\nDr. Desmond Tsoi\nDepartment of Computer Science & Engineering\nThe Hong Kong University of Science and Technology\nHong Kong S",
-      "visual_elements": []
+      "slide_content_summary": "COMP 1023 Introduction to Python Programming\nRecursion\nDr. James Cheung, Dr. Wilfred Ng, Dr. Desmond Tsoi\nDepartment of Computer Science & Engineering\nThe Hong Kong University of Science and Technolog",
+      "visual_elements": [],
+      "concepts": []
+    },
+    {
+      "topic_name": "Introduction",
+      "start_sec": 60.0,
+      "end_sec": 120.0,
+      "time_range": "1:00 - 2:00",
+      "duration_sec": 60.0,
+      "transcript_text": "Introduction\nRecursion is a technique that leads to elegant solutions for\nproblems that are difficult to solve using simple loops.\nIt is the process of defining a solution to a problem in terms\nof a simpler version of itself.\nMany natural phenomena exhibit recursion.\nRecursive functions are functions that call themselves. They\nconsist of two parts: the base case(s) and the recursive\ncase(s).\nThe base cases are the conditions that stop the recursion.\nThe recursive cases are the parts in which the function calls\nitself.\n{thjcheung, wng, desmond}@ust.hk COMP 1023 (Spring 2026) 2 / 23",
+      "key_points": [],
+      "related_slide_nums": [
+        2
+      ],
+      "slide_content_summary": "Introduction\nRecursion is a technique that leads to elegant solutions for\nproblems that are difficult to solve using simple loops.\nIt is the process of defining a solution to a problem in terms\nof a s",
+      "visual_elements": [],
+      "concepts": []
+    },
+    {
+      "topic_name": "The Handshake Problem",
+      "start_sec": 120.0,
+      "end_sec": 180.0,
+      "time_range": "2:00 - 3:00",
+      "duration_sec": 60.0,
+      "transcript_text": "The Handshake Problem\nProblem Statement\nThere arenpeople in the room. If each person shakes hands once with every other person, what will\nthe total number of handshakes be?\n1 person (A): 0 handshakes.\n2 people (A and B): 1 handshake.\nA\n B\n3 people (A, B, and C):\nA\n B, A\n C, B\n C\n4 people (A, B, C, and D):\nA\n B, A\n C, A\n D\nB\n C, B\n D, C\n D\n{thjcheung, wng, desmond}@ust.hk COMP 1023 (Spring 2026) 3 / 23",
+      "key_points": [],
+      "related_slide_nums": [
+        3
+      ],
+      "slide_content_summary": "The Handshake Problem\nProblem Statement\nThere arenpeople in the room. If each person shakes hands once with every other person, what will\nthe total number of handshakes be?\n1 person (A): 0 handshakes.",
+      "visual_elements": [],
+      "concepts": []
+    },
+    {
+      "topic_name": "The Handshake Problem",
+      "start_sec": 180.0,
+      "end_sec": 240.0,
+      "time_range": "3:00 - 4:00",
+      "duration_sec": 60.0,
+      "transcript_text": "The Handshake Problem\nThere is a trick to find the total number of handshakes:\nIf there are 2 people, there is only 1 handshake.\nIf there are 3 people, treat it as having 1 more person added to the 2 people, resulting in 2\nextra handshakes.\nIf there are 4 people, treat it as having 1 more person added to the 3 people, resulting in 3\nextra handshakes.\nYou can generalize the total number into a formula.\nLeth(n) be the total number of handshakes amongnpeople:\nh(1) = 0 (Base case)\nh(2) =h(1) + 1 = 0 + 1 = 1\nh(3) =h(2) + 2 = 1 + 2 = 3\nh(4) =h(3) + 3 = 3 + 3 = 6\n· · ·\nh(n) =h(n−1) + (n−1) (General case)\nh(n) =\n(\nh(n−1) + (n−1),ifn≥2\n0,otherwise\n{thjcheung, wng, desmond}@ust.hk COMP 1023 (Spring 2026) 4 / 23",
+      "key_points": [],
+      "related_slide_nums": [
+        4
+      ],
+      "slide_content_summary": "The Handshake Problem\nThere is a trick to find the total number of handshakes:\nIf there are 2 people, there is only 1 handshake.\nIf there are 3 people, treat it as having 1 more person added to the 2 ",
+      "visual_elements": [],
+      "concepts": []
+    },
+    {
+      "topic_name": "The Handshake Problem",
+      "start_sec": 240.0,
+      "end_sec": 300.0,
+      "time_range": "4:00 - 5:00",
+      "duration_sec": 60.0,
+      "transcript_text": "The Handshake Problem\n# Filename: handshake.py\ndef handshake(n: int) -> int:\nif n <= 1:# Base case\nreturn 0# No one to shake hands\nreturn handshake(n-1) + (n-1)# General case\ndef main() -> None:\nfor i in range(5):\nprint(f\"{i} Person: {handshake(i)} handshake(s)\")\nif __name__ == \"__main__\":\nmain()\nOutput:\n0 Person: 0 handshake(s)\n1 Person: 0 handshake(s)\n2 Person: 1 handshake(s)\n3 Person: 3 handshake(s)\n4 Person: 6 handshake(s)\n{thjcheung, wng, desmond}@ust.hk COMP 1023 (Spring 2026) 5 / 23",
+      "key_points": [],
+      "related_slide_nums": [
+        5
+      ],
+      "slide_content_summary": "The Handshake Problem\n# Filename: handshake.py\ndef handshake(n: int) -> int:\nif n <= 1:# Base case\nreturn 0# No one to shake hands\nreturn handshake(n-1) + (n-1)# General case\ndef main() -> None:\nfor i",
+      "visual_elements": [],
+      "concepts": []
+    },
+    {
+      "topic_name": "General Structure of Recursive Function",
+      "start_sec": 300.0,
+      "end_sec": 360.0,
+      "time_range": "5:00 - 6:00",
+      "duration_sec": 60.0,
+      "transcript_text": "General Structure of Recursive Function\nThe recursive function is implemented using anifor anif-elsestatement that leads to\ndifferent cases.\nOne or more base cases (the simplest cases) are used to stop recursion.\nEvery recursive call reduces the original problem, bringing it increasingly closer to a base\ncase until it becomes that case.\ndef <recursive_function_name>(<parameter list>):\n# Base case: condition to stop recursion\nif <base_case_condition>:\nreturn <base_case_value>\n# General case: call the function itself with modified parameters\nreturn <recursive_function_name>(modified_parameters)\n{thjcheung, wng, desmond}@ust.hk COMP 1023 (Spring 2026) 6 / 23",
+      "key_points": [],
+      "related_slide_nums": [
+        6
+      ],
+      "slide_content_summary": "General Structure of Recursive Function\nThe recursive function is implemented using anifor anif-elsestatement that leads to\ndifferent cases.\nOne or more base cases (the simplest cases) are used to sto",
+      "visual_elements": [],
+      "concepts": []
+    },
+    {
+      "topic_name": "Factorial Problem",
+      "start_sec": 360.0,
+      "end_sec": 420.0,
+      "time_range": "6:00 - 7:00",
+      "duration_sec": 60.0,
+      "transcript_text": "Factorial Problem\nThe factorial ofnis defined asn! =n×(n−1)!,\nwherenis a non-negative integer.\nLetf(n) representn!; it is computed as follows:\nf(n) =\n(\nn×f(n−1),ifn>0\n1,ifn= 0\n# Filename: factorial_recursive.py\ndef factorial(n: int) -> int:\nif n == 0:# Base case\nreturn 1\nreturn n * factorial(n - 1)# General case\ndef main() -> None:\nfor i in range(6):\nprint(f\"{i}! = {factorial(i)}\")\nif __name__ == \"__main__\": main()\nOutput:\n0! = 1\n1! = 1\n2! = 2\n3! = 6\n4! = 24\n5! = 120\n{thjcheung, wng, desmond}@ust.hk COMP 1023 (Spring 2026) 7 / 23",
+      "key_points": [],
+      "related_slide_nums": [
+        7
+      ],
+      "slide_content_summary": "Factorial Problem\nThe factorial ofnis defined asn! =n×(n−1)!,\nwherenis a non-negative integer.\nLetf(n) representn!; it is computed as follows:\nf(n) =\n(\nn×f(n−1),ifn>0\n1,ifn= 0\n# Filename: factorial_re",
+      "visual_elements": [],
+      "concepts": []
+    },
+    {
+      "topic_name": "Factorial Problem - Demonstration",
+      "start_sec": 420.0,
+      "end_sec": 480.0,
+      "time_range": "7:00 - 8:00",
+      "duration_sec": 60.0,
+      "transcript_text": "Factorial Problem - Demonstration\ndef factorial(n: int) -> int:\nif n == 0:# Base case\nreturn 1\nreturn n * factorial(n - 1)# General case\nfactorial(3):\n3 == 0 ? No\nfac(3) = 3 * fac(2)\nfac(2):\n2 == 0 ? No\nfac(2) = 2 * fac(1)\nfac(1):\n1 == 0 ? No\nfac(1) = 1 * fac(0)\nfac(0):\n0 == 0 ? Yes\nreturn 1\nfac(1) = 1 * 1\nreturn 1\nfac(2) = 2 * 1 = 2\nreturn 2\nfac(3) = 3 * 2 = 6\nreturn 6\nfac(3) has the value 6\n{thjcheung, wng, desmond}@ust.hk COMP 1023 (Spring 2026) 8 / 23",
+      "key_points": [],
+      "related_slide_nums": [
+        8
+      ],
+      "slide_content_summary": "Factorial Problem - Demonstration\ndef factorial(n: int) -> int:\nif n == 0:# Base case\nreturn 1\nreturn n * factorial(n - 1)# General case\nfactorial(3):\n3 == 0 ? No\nfac(3) = 3 * fac(2)\nfac(2):\n2 == 0 ? ",
+      "visual_elements": [],
+      "concepts": []
+    },
+    {
+      "topic_name": "Factorial Problem",
+      "start_sec": 480.0,
+      "end_sec": 540.0,
+      "time_range": "8:00 - 9:00",
+      "duration_sec": 60.0,
+      "transcript_text": "Factorial Problem\nIt is simpler and more efficient to implement the factorial function using a loop. However,\nwe use the recursive factorial function here to demonstrate the concept of recursion.\ndef factorial(n: int) -> int:\nif n == 0:# Base case\nreturn 1\nreturn n * factorial(n - 1)# General case\ndef factorial(n: int) -> int:\nproduct: int = 1\nwhile n > 0:\nproduct *= n\nn -= 1\nreturn product\nFor certain problems, a recursive solution often leads to short and elegant code.\n{thjcheung, wng, desmond}@ust.hk COMP 1023 (Spring 2026) 9 / 23",
+      "key_points": [],
+      "related_slide_nums": [
+        9
+      ],
+      "slide_content_summary": "Factorial Problem\nIt is simpler and more efficient to implement the factorial function using a loop. However,\nwe use the recursive factorial function here to demonstrate the concept of recursion.\ndef ",
+      "visual_elements": [],
+      "concepts": []
+    },
+    {
+      "topic_name": "Fibonacci’s Bunnies Problem",
+      "start_sec": 540.0,
+      "end_sec": 600.0,
+      "time_range": "9:00 - 10:00",
+      "duration_sec": 60.0,
+      "transcript_text": "Fibonacci’s Bunnies Problem\nEach new pair of bunnies becomes fertile at the age of one month.\nEach pair of fertile bunnies produces a new pair of offspring every month.\nNone of the bunnies die during this time.\nInitially, God creates a pair of bunnies (let’s call them A and B).[1 pair]\nAfter 1 month, the pair of bunnies becomes fertile.[1 pair]\nAfter 2 months, A and B produce a new pair of bunnies (let’s call them C and D). So there will be\n2 pairs of bunnies (A, B and C, D).[2 pairs]\nAfter 3 months, A and B produce a new pair of bunnies (let’s call them E and F), and C and D\nbecome fertile. So there will be 3 pairs of bunnies (A, B; C, D; and E, F).[3 pairs]\nAfter 4 months, A and B produce a new pair of bunnies (let’s call them G and H), C and D\nproduce a new pair of bunnies (let’s call them I and J), and E and F become fertile. So there will\nbe 5 pairs of bunnies (A, B; C, D; E, F; G, H; and I, J).[5 pairs]\nQuestion\nAfternmonths, how many pairs of bunnies are there?\n{thjcheung, wng, desmond}@ust.hk COMP 1023 (Spring 2026) 10 / 23",
+      "key_points": [],
+      "related_slide_nums": [
+        10
+      ],
+      "slide_content_summary": "Fibonacci’s Bunnies Problem\nEach new pair of bunnies becomes fertile at the age of one month.\nEach pair of fertile bunnies produces a new pair of offspring every month.\nNone of the bunnies die during ",
+      "visual_elements": [],
+      "concepts": []
+    },
+    {
+      "topic_name": "Fibonacci’s Bunnies",
+      "start_sec": 600.0,
+      "end_sec": 660.0,
+      "time_range": "10:00 - 11:00",
+      "duration_sec": 60.0,
+      "transcript_text": "Fibonacci’s Bunnies\nThe sequence (1, 1, 2, 3, 5, 8, ...) is called the Fibonacci sequence, proposed by Leonardo\nFibonacci in 1202 inThe Book of the Abacus. It is believed to model nature to a certain\nextent, such as Kepler’s observation of leaves and flowers in 1611.\nFibonacci sequence:\n1, 1, 2, 3, 5, 8, 13, 21, 34, ...\nwhere each number is the sum of the two preceding numbers.\n{thjcheung, wng, desmond}@ust.hk COMP 1023 (Spring 2026) 11 / 23",
+      "key_points": [],
+      "related_slide_nums": [
+        11
+      ],
+      "slide_content_summary": "Fibonacci’s Bunnies\nThe sequence (1, 1, 2, 3, 5, 8, ...) is called the Fibonacci sequence, proposed by Leonardo\nFibonacci in 1202 inThe Book of the Abacus. It is believed to model nature to a certain\n",
+      "visual_elements": [],
+      "concepts": []
+    },
+    {
+      "topic_name": "Fibonacci’s Bunnies Problem",
+      "start_sec": 660.0,
+      "end_sec": 720.0,
+      "time_range": "11:00 - 12:00",
+      "duration_sec": 60.0,
+      "transcript_text": "Fibonacci’s Bunnies Problem\nRecursive definition:\nLetF(n) be the number of pairs of bunnies afternmonths; it is computed as follows:\nF(n) =\n\n\n\n1 ifn= 0 (Number of pairs of bunnies after 0 months)\n1 ifn= 1 (Number of pairs of bunnies after 1 month)\nF(n−1) +F(n−2) ifn≥2\n{thjcheung, wng, desmond}@ust.hk COMP 1023 (Spring 2026) 12 / 23",
+      "key_points": [],
+      "related_slide_nums": [
+        12
+      ],
+      "slide_content_summary": "Fibonacci’s Bunnies Problem\nRecursive definition:\nLetF(n) be the number of pairs of bunnies afternmonths; it is computed as follows:\nF(n) =\n\n\n\n1 ifn= 0 (Number of pairs of bunnies after 0 months)",
+      "visual_elements": [],
+      "concepts": []
+    },
+    {
+      "topic_name": "Fibonacci’s Bunnies",
+      "start_sec": 720.0,
+      "end_sec": 780.0,
+      "time_range": "12:00 - 13:00",
+      "duration_sec": 60.0,
+      "transcript_text": "Fibonacci’s Bunnies\n# Filename: fib.py\ndef fib(n: int) -> int:\nif n == 0 or n == 1:# Base cases\nreturn 1\nreturn fib(n - 1) + fib(n - 2)# Recursive case\ndef main() -> None:\nm: int = int(input(\"Enter month: \"))\nnum_bunnies: int = fib(m)\nprint(f\"The number of pairs of bunnies after {m} \\\nmonth(s) is equal to {num_bunnies} pair(s)\")\nif __name__ == \"__main__\": main()\nOutput:\nEnter month:5\nThe number of pairs of bunnies after 5 month(s) is equal to 8 pair(s)\nEnter month:10\nThe number of pairs of bunnies after 10 month(s) is equal to 89 pair(s)\nEnter month:20\nThe number of pairs of bunnies after 20 month(s) is equal to 10946 pair(s)\n{thjcheung, wng, desmond}@ust.hk COMP 1023 (Spring 2026) 13 / 23",
+      "key_points": [],
+      "related_slide_nums": [
+        13
+      ],
+      "slide_content_summary": "Fibonacci’s Bunnies\n# Filename: fib.py\ndef fib(n: int) -> int:\nif n == 0 or n == 1:# Base cases\nreturn 1\nreturn fib(n - 1) + fib(n - 2)# Recursive case\ndef main() -> None:\nm: int = int(input(\"Enter mo",
+      "visual_elements": [],
+      "concepts": []
+    },
+    {
+      "topic_name": "Fibonacci’s Bunnies",
+      "start_sec": 780.0,
+      "end_sec": 840.0,
+      "time_range": "13:00 - 14:00",
+      "duration_sec": 60.0,
+      "transcript_text": "Fibonacci’s Bunnies\nCalculating fib(4) using recursion:\nMany intermediate steps are re-calculated.\n{thjcheung, wng, desmond}@ust.hk COMP 1023 (Spring 2026) 14 / 23",
+      "key_points": [],
+      "related_slide_nums": [
+        14
+      ],
+      "slide_content_summary": "Fibonacci’s Bunnies\nCalculating fib(4) using recursion:\nMany intermediate steps are re-calculated.\n{thjcheung, wng, desmond}@ust.hk COMP 1023 (Spring 2026) 14 / 23",
+      "visual_elements": [],
+      "concepts": []
+    },
+    {
+      "topic_name": "Recursion and Loop",
+      "start_sec": 840.0,
+      "end_sec": 900.0,
+      "time_range": "14:00 - 15:00",
+      "duration_sec": 60.0,
+      "transcript_text": "Recursion and Loop\nBoth recursion and looping are used to perform repetitive tasks in programming.\nThey can be employed to solve the same problems, often yielding the same results,\nthough the approach and implementation differ.\nComparison:\nLoop Recursion\nInitialization Initialize variables before the loop. Pass initial values as parameters.\nCondition Check a condition at the beginning\nor end of each iteration. Base case checks to stop further calls.\nIteration/\nRecursion Update variables within the loop. Call the function with updated parameters.\nTermination Exit when the condition is false. Return a value when the base case\nis reached.\n{thjcheung, wng, desmond}@ust.hk COMP 1023 (Spring 2026) 15 / 23",
+      "key_points": [],
+      "related_slide_nums": [
+        15
+      ],
+      "slide_content_summary": "Recursion and Loop\nBoth recursion and looping are used to perform repetitive tasks in programming.\nThey can be employed to solve the same problems, often yielding the same results,\nthough the approach",
+      "visual_elements": [],
+      "concepts": []
+    },
+    {
+      "topic_name": "Recursive Stack Overflow and Its Handling",
+      "start_sec": 900.0,
+      "end_sec": 960.0,
+      "time_range": "15:00 - 16:00",
+      "duration_sec": 60.0,
+      "transcript_text": "Recursive Stack Overflow and Its Handling\nStack overflow occurs when a recursive function exceeds the maximum call stack size.\nCan lead to a ‘RecursionError’ in Python.\nStrategies to Handle Stack Overflow:\nBase Case:\nEnsure that the base case is correctly defined and reachable.\nExample: In a factorial function, ensure you return 1 whenn= 0.\nTail Recursion:\nTail recursion is a specific type of recursion where the recursive call is the last operation in the\nfunction. This means that there is no additional computation after the recursive call.\nUse it where possible, which can be optimized by some compilers.\nPython does not optimize tail recursion, but it’s a good practice in other languages.\nIterative Solutions:\nConvert recursive algorithms to iterative ones using loops and stacks.\nExample: Use a stack data structure to simulate recursion.\nIncrease Recursion Limit:\nUsesys.setrecursionlimit(limit)to increase the maximum recursion depth.\nCaution: Increasing the limit can lead to crashes if not managed properly.\n{thjcheung, wng, desmond}@ust.hk COMP 1023 (Spring 2026) 16 / 23",
+      "key_points": [],
+      "related_slide_nums": [
+        16
+      ],
+      "slide_content_summary": "Recursive Stack Overflow and Its Handling\nStack overflow occurs when a recursive function exceeds the maximum call stack size.\nCan lead to a ‘RecursionError’ in Python.\nStrategies to Handle Stack Over",
+      "visual_elements": [],
+      "concepts": []
+    },
+    {
+      "topic_name": "Recursion",
+      "start_sec": 960.0,
+      "end_sec": 1020.0,
+      "time_range": "16:00 - 17:00",
+      "duration_sec": 60.0,
+      "transcript_text": "Recursion\nRecursion enables you to create an intuitive, straightforward, and simple solution to a\nproblem. However, there are trade-offs associated with its use:\nCalling a function consumes more time and memory than adjusting a loop counter.\nHigh-performance applications (such as graphics-intensive games or simulations of nuclear\nexplosions) rarely use recursion.\nIn less demanding applications, recursion can be an attractive alternative to iteration (for\nthe right problems!).\n{thjcheung, wng, desmond}@ust.hk COMP 1023 (Spring 2026) 17 / 23",
+      "key_points": [],
+      "related_slide_nums": [
+        17
+      ],
+      "slide_content_summary": "Recursion\nRecursion enables you to create an intuitive, straightforward, and simple solution to a\nproblem. However, there are trade-offs associated with its use:\nCalling a function consumes more time ",
+      "visual_elements": [
+        "diagram on slide 17: High-performance applications (such as graphics-intensive games or simulations o"
+      ],
+      "concepts": []
+    },
+    {
+      "topic_name": "Caution with Loops and Recursion",
+      "start_sec": 1020.0,
+      "end_sec": 1080.0,
+      "time_range": "17:00 - 18:00",
+      "duration_sec": 60.0,
+      "transcript_text": "Caution with Loops and Recursion\nIf we use a loop, we must be careful not to create an infinite loop by accident:\nresult = 1\nwhile result > 0:\n...\nresult += 1# Oops!\nSimilarly, if we use recursion, we must be careful not to create an infinite chain of\nfunction calls:\ndef factorial(n: int) -> int:\nreturn n * factorial(n - 1)# No base case (Oops!)\n# ---------------------------------------------------------\ndef factorial(n: int) -> int:\nif n == 1:\nreturn 1\nreturn n * factorial(n + 1)# factorial(n + 1) (Oops!)\n{thjcheung, wng, desmond}@ust.hk COMP 1023 (Spring 2026) 18 / 23",
+      "key_points": [],
+      "related_slide_nums": [
+        18
+      ],
+      "slide_content_summary": "Caution with Loops and Recursion\nIf we use a loop, we must be careful not to create an infinite loop by accident:\nresult = 1\nwhile result > 0:\n...\nresult += 1# Oops!\nSimilarly, if we use recursion, we",
+      "visual_elements": [],
+      "concepts": []
+    },
+    {
+      "topic_name": "Conclusion",
+      "start_sec": 1080.0,
+      "end_sec": 1140.0,
+      "time_range": "18:00 - 19:00",
+      "duration_sec": 60.0,
+      "transcript_text": "Conclusion\nRecursion is one way to decompose a task into smaller subtasks.\nAt least one of the subtasks is a simpler example of the same task:\nWe must always ensure the following when designing recursive functions:\nA recursive function must contain at least one non-recursive branch (i.e., base case).\nThe recursive calls must eventually lead to a non-recursive branch.\nAn example is the factorial function:\nn! =n×(n−1)! (Simpler subtask is (n−1)!)\n1! = 1 (The simplest task isn= 1)\n{thjcheung, wng, desmond}@ust.hk COMP 1023 (Spring 2026) 19 / 23",
+      "key_points": [],
+      "related_slide_nums": [
+        19
+      ],
+      "slide_content_summary": "Conclusion\nRecursion is one way to decompose a task into smaller subtasks.\nAt least one of the subtasks is a simpler example of the same task:\nWe must always ensure the following when designing recurs",
+      "visual_elements": [],
+      "concepts": []
+    },
+    {
+      "topic_name": "Key Terms",
+      "start_sec": 1140.0,
+      "end_sec": 1200.0,
+      "time_range": "19:00 - 20:00",
+      "duration_sec": 60.0,
+      "transcript_text": "Key Terms\nbase case\ninfinite recursion\nrecursive function\nstopping condition\n{thjcheung, wng, desmond}@ust.hk COMP 1023 (Spring 2026) 20 / 23",
+      "key_points": [],
+      "related_slide_nums": [
+        20
+      ],
+      "slide_content_summary": "Key Terms\nbase case\ninfinite recursion\nrecursive function\nstopping condition\n{thjcheung, wng, desmond}@ust.hk COMP 1023 (Spring 2026) 20 / 23",
+      "visual_elements": [],
+      "concepts": []
+    },
+    {
+      "topic_name": "Review Questions",
+      "start_sec": 1200.0,
+      "end_sec": 1260.0,
+      "time_range": "20:00 - 21:00",
+      "duration_sec": 60.0,
+      "transcript_text": "Review Questions\nFill in the blanks in each of the following sentences about the Python environment.\n1. A is one that directly or indirectly invokes itself. For a\nto terminate, there must be one or more .\n2. Recursion is an alternative form of program control. It is essentially repetition without a\nloop control. It can be used to write simple, clear solutions for inherently recursive\nproblems that would otherwise be .\n3. Recursion bears substantial . Each time the program calls a function,\nthe system must allocate memory for all of the function’s and\n. This can consume considerable computer memory and requires extra\ntime to manage the additional memory.\nAnswer: 1. recursive function; recursive function; base cases, 2. difficult to solve, 3. overhead;\nlocal variables; parameters\n{thjcheung, wng, desmond}@ust.hk COMP 1023 (Spring 2026) 21 / 23",
+      "key_points": [
+        "A is one that directly or indirectly invokes itself. For a",
+        "Recursion is an alternative form of program control. It is essentially repetition without a",
+        "Recursion bears substantial . Each time the program calls a function,"
+      ],
+      "related_slide_nums": [
+        21
+      ],
+      "slide_content_summary": "Review Questions\nFill in the blanks in each of the following sentences about the Python environment.\n1. A is one that directly or indirectly invokes itself. For a\nto terminate, there must be one or mo",
+      "visual_elements": [],
+      "concepts": []
+    },
+    {
+      "topic_name": "Further Reading",
+      "start_sec": 1260.0,
+      "end_sec": 1320.0,
+      "time_range": "21:00 - 22:00",
+      "duration_sec": 60.0,
+      "transcript_text": "Further Reading\nRead Chapter 15 of “Introduction to Python Programming and Data Structures”\ntextbook.\n{thjcheung, wng, desmond}@ust.hk COMP 1023 (Spring 2026) 22 / 23",
+      "key_points": [],
+      "related_slide_nums": [
+        22
+      ],
+      "slide_content_summary": "Further Reading\nRead Chapter 15 of “Introduction to Python Programming and Data Structures”\ntextbook.\n{thjcheung, wng, desmond}@ust.hk COMP 1023 (Spring 2026) 22 / 23",
+      "visual_elements": [],
+      "concepts": []
+    },
+    {
+      "topic_name": "That’s all!",
+      "start_sec": 1320.0,
+      "end_sec": 1380.0,
+      "time_range": "22:00 - 23:00",
+      "duration_sec": 60.0,
+      "transcript_text": "That’s all!\nAny questions?\n",
+      "key_points": [],
+      "related_slide_nums": [
+        23
+      ],
+      "slide_content_summary": "That’s all!\nAny questions?\n",
+      "visual_elements": [
+        "diagram on slide 23: slide appears to be mostly visual/diagram"
+      ],
+      "concepts": []
     }
   ],
   "reel_scripts": [
     {
-      "topic": "References in C++",
-      "hook": "Ever wondered how variables can share the same memory? Let’s decode C++ references!",
-      "narration_text": "References are like aliases for variables! They must be initialized, unlike pointers. See this? 'int& r1 = j;' binds r1 to j. But beware: using & as an address operator vs. reference declaration is a common trap. Try this quiz: Why is 'int& i = &j;' wrong? Answer: Because &j gives an address, not a variable! References are powerful but need care.",
+      "topic": "COMP 1023 Introduction to Python Programming > COMP 1023 Introduction to Python Programming",
+      "hook": "Ever tried solving a problem by making it smaller each time?",
+      "narration_text": "Imagine you're at a party and everyone shakes hands. How do you count the total handshakes? Instead of listing every pair, think recursively: each person shakes hands with everyone else, then add that to the smaller group. That's recursion—breaking a problem into smaller versions of itself. Like calculating factorials: 5! is 5 times 4!, and 4! is 4 times 3!, all the way down to 0! which is 1. The key is having a base case to stop the chain. Recursion isn't just for math—it's how computers tackle complex tasks by simplifying them step by step.",
       "visual_directions": [
         {
           "timestamp_sec": 0.0,
           "duration_sec": 5.0,
           "visual_type": "slide",
-          "description": "Show slide 3 with declaration syntax, zoom on 'int& r1 = j;'",
+          "description": "Show slide 3 with handshake problem illustration",
           "source_reference": "slide 3",
           "slide_number": 3
         },
@@ -322,32 +825,36 @@
           "timestamp_sec": 5.0,
           "duration_sec": 5.0,
           "visual_type": "slide",
-          "description": "Highlight slide 4's 'must be initialized' rule",
-          "source_reference": "slide 4",
-          "slide_number": 4
+          "description": "Display slide 7's factorial formula diagram",
+          "source_reference": "slide 7",
+          "slide_number": 7
         },
         {
           "timestamp_sec": 10.0,
           "duration_sec": 5.0,
           "visual_type": "slide",
-          "description": "Zoom on slide 6's incorrect code: 'int& i = &j;'",
-          "source_reference": "slide 6",
-          "slide_number": 6
+          "description": "Highlight slide 12's Fibonacci recursive definition",
+          "source_reference": "slide 12",
+          "slide_number": 12
         }
       ],
-      "target_duration_sec": 30,
+      "target_duration_sec": 90,
       "source_time_range": "0:00 - 1:00",
-      "key_takeaway": "References are initialized aliases that must bind to valid variables, not addresses.",
-      "quiz_question": "Why is 'int& i = &j;' invalid?",
+      "key_takeaway": "Recursion solves problems by breaking them into smaller, similar subproblems with a base case to stop the process.",
+      "quiz_question": "Which of these best describes recursion?",
       "quiz_choices": [
-        "A) References can't be null",
-        "B) &j returns an address, not a variable",
-        "C) You need to use * for references",
-        "D) It requires a const qualifier"
+        "A) A loop that repeats indefinitely",
+        "B) A function that calls itself",
+        "C) A variable that stores data",
+        "D) A loop with a condition"
       ],
       "quiz_answer_index": 1,
-      "suggested_caption": "References in C++: Aliases that change everything! #CPlusPlus #ProgrammingTips",
-      "music_mood": "calm"
+      "suggested_caption": "Recursion simplified! 🧠 Break problems into smaller parts. #PythonProgramming #COMP1023 #RecursionTips",
+      "music_mood": "inspiring",
+      "format": "character",
+      "character": "",
+      "length": "long",
+      "voice": "English_expressive_narrator"
     }
   ]
 }
