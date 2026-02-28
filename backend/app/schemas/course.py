@@ -60,3 +60,14 @@ class CanvasImportRequest(BaseModel):
     canvas_base_url: str
     canvas_api_token: str
     canvas_course_id: str
+
+
+class SyllabusParsedTopic(BaseModel):
+    topic: str
+    subtopics: List[str] = []
+    weight: float = 0.0
+
+
+class SyllabusParseResponse(BaseModel):
+    course_name: str
+    topics: List[SyllabusParsedTopic]

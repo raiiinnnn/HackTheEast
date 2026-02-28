@@ -38,3 +38,38 @@ export async function updateSyllabus(
   );
   return data;
 }
+
+export async function deleteTopic(
+  courseId: number,
+  topicId: number
+): Promise<void> {
+  await apiClient.delete(`/courses/${courseId}/topics/${topicId}`);
+}
+
+export interface ParsedSyllabusTopic {
+  topic: string;
+  subtopics: string[];
+  weight: number;
+}
+
+export interface ParsedSyllabusResponse {
+  course_name: string;
+  topics: ParsedSyllabusTopic[];
+}
+
+export async function parseSyllabusPdf(
+  file: File,
+  courseContext?: string
+): Promise<ParsedSyllabusResponse> {
+  const formData = new FormData();
+  formData.append("file", file, file.name);
+  if (courseContext) {
+    formData.append("course_context", courseContext);
+  }
+  const { data } = await apiClient.post<ParsedSyllabusResponse>(
+    "/courses/syllabus/parse",
+    formData,
+    { headers: { "Content-Type": "multipart/form-data" } }
+  );
+  return data;
+}
