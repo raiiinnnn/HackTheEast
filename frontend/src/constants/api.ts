@@ -11,3 +11,6 @@ const DEV_BACKEND =
 
 export const API_BASE_URL = DEV_BACKEND;
 export const API_PREFIX = "/api/v1";
+
+export const GOOGLE_CLIENT_ID = "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";
+
