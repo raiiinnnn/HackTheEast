@@ -9,6 +9,7 @@ export interface UserResponse {
   display_name: string | null;
   auth_provider: string;
   abelian_address: string | null;
+  video_duration_pref: string;
 }
 
 export interface AbelianKeypair {

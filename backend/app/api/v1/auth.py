@@ -15,6 +15,7 @@ from app.schemas.auth import (
     LoginRequest,
     TokenResponse,
     UserResponse,
+    UpdatePreferencesRequest,
     GoogleAuthRequest,
     AbelianRegisterRequest,
     AbelianChallengeRequest,
@@ -195,4 +196,22 @@ async def abelian_verify(body: AbelianVerifyRequest, db: AsyncSession = Depends(
 
 @router.get("/me", response_model=UserResponse)
 async def get_me(current_user: User = Depends(get_current_user)):
+    return current_user
+
+
+VALID_DURATION_PREFS = {"short", "medium", "long"}
+
+
+@router.put("/preferences", response_model=UserResponse)
+async def update_preferences(
+    body: UpdatePreferencesRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if body.video_duration_pref not in VALID_DURATION_PREFS:
+        raise HTTPException(status_code=400, detail=f"Invalid preference. Must be one of: {VALID_DURATION_PREFS}")
+    current_user.video_duration_pref = body.video_duration_pref
+    db.add(current_user)
+    await db.flush()
+    await db.refresh(current_user)
     return current_user

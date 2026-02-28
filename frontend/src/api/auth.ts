@@ -98,3 +98,12 @@ export async function getMe(): Promise<UserResponse> {
   const { data } = await apiClient.get<UserResponse>("/auth/me");
   return data;
 }
+
+export async function updatePreferences(
+  videoDurationPref: string
+): Promise<UserResponse> {
+  const { data } = await apiClient.put<UserResponse>("/auth/preferences", {
+    video_duration_pref: videoDurationPref,
+  });
+  return data;
+}

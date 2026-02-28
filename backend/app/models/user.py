@@ -12,5 +12,6 @@ class User(Base):
     auth_provider = Column(String(20), nullable=False, default="email")
     google_id = Column(String(255), unique=True, nullable=True, index=True)
     abelian_address = Column(Text, nullable=True)
+    video_duration_pref = Column(String(10), nullable=False, server_default="medium")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
