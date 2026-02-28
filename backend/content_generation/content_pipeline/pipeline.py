@@ -130,6 +130,7 @@ class ContentPipeline:
         video_path: str | Path | None = None,
         slides_path: str | Path | None = None,
         output_path: str | Path | None = None,
+        max_topics: int | None = None,
     ) -> PipelineResult:
         """
         Run the full pipeline.
@@ -183,6 +184,10 @@ class ContentPipeline:
             result.topic_segments = self._topics_from_slides_only(result.slides)
         else:
             raise RuntimeError("No content to segment.")
+
+        if max_topics is not None:
+            result.topic_segments = result.topic_segments[:max_topics]
+            print(f"  (Limited to {max_topics} topic(s) for testing)")
 
         # Step 4: Generate reel scripts
         print(f"\n[4/4] GENERATING REEL SCRIPTS")

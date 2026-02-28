@@ -8,6 +8,7 @@ Each script is a complete blueprint for producing a TikTok/Reels-style education
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass, field
 from typing import Literal, TYPE_CHECKING
 
@@ -27,15 +28,19 @@ class VisualDirection:
     visual_type: str  # "slide", "video_clip", "text_overlay", "diagram", "animation_prompt"
     description: str
     source_reference: str = ""  # e.g. "slide 3", "video 1:23-1:30"
+    slide_number: int | None = None  # explicit slide page to display during this beat
 
     def to_dict(self) -> dict:
-        return {
+        d = {
             "timestamp_sec": round(self.timestamp_sec, 1),
             "duration_sec": round(self.duration_sec, 1),
             "visual_type": self.visual_type,
             "description": self.description,
             "source_reference": self.source_reference,
         }
+        if self.slide_number is not None:
+            d["slide_number"] = self.slide_number
+        return d
 
 
 @dataclass
@@ -131,6 +136,10 @@ class ScriptGenerator:
 
         scripts: list[ReelScript] = []
 
+        all_slide_context = ""
+        if slides:
+            all_slide_context = self._format_slide_context(slides)
+
         for seg in topic_segments:
             if len(scripts) >= self.max_reels:
                 break
@@ -138,12 +147,17 @@ class ScriptGenerator:
             remaining = self.max_reels - len(scripts)
             reels_for_topic = self._decide_reel_count(seg, remaining)
 
-            slide_context = ""
             if slides and seg.related_slide_nums:
                 matched = [s for s in slides if s.page_num in seg.related_slide_nums]
-                slide_context = self._format_slide_context(matched)
+                topic_slide_context = self._format_slide_context(matched)
+            else:
+                topic_slide_context = ""
 
-            prompt = self._build_script_prompt(seg, slide_context, reels_for_topic)
+            prompt = self._build_script_prompt(
+                seg, topic_slide_context, reels_for_topic,
+                all_slides_context=all_slide_context,
+                available_slide_nums=[s.page_num for s in slides] if slides else [],
+            )
 
             print(f"  → Generating script for '{seg.topic_name}' ({reels_for_topic} reel(s))...")
             result = llm_chat(
@@ -189,7 +203,12 @@ class ScriptGenerator:
         return "\n".join(parts)
 
     def _build_script_prompt(
-        self, seg: TopicSegment, slide_context: str, reel_count: int
+        self,
+        seg: TopicSegment,
+        slide_context: str,
+        reel_count: int,
+        all_slides_context: str = "",
+        available_slide_nums: list[int] | None = None,
     ) -> str:
         visual_elements_section = ""
         if seg.visual_elements:
@@ -200,7 +219,15 @@ class ScriptGenerator:
 
         slide_section = ""
         if slide_context:
-            slide_section = f"\nSLIDE CONTENT:\n{slide_context}"
+            slide_section = f"\nTOPIC-RELATED SLIDES:\n{slide_context}"
+
+        all_slides_section = ""
+        if all_slides_context:
+            all_slides_section = f"\nALL AVAILABLE SLIDES:\n{all_slides_context}"
+
+        slide_nums_hint = ""
+        if available_slide_nums:
+            slide_nums_hint = f"\nAvailable slide numbers: {available_slide_nums}"
 
         return f"""Create {reel_count} reel script(s) for this lecture topic.
 
@@ -211,7 +238,9 @@ KEY POINTS: {json.dumps(seg.key_points)}
 PROFESSOR'S WORDS (transcript):
 {seg.transcript_text[:3000]}
 {slide_section}
+{all_slides_section}
 {visual_elements_section}
+{slide_nums_hint}
 
 Each reel should be ~{self.reel_duration} seconds (~{self._target_words} words narration).
 
@@ -226,9 +255,10 @@ Produce JSON with this EXACT structure:
         {{
           "time_offset_sec": 0,
           "duration_sec": 5,
-          "type": "slide|video_clip|text_overlay|diagram|animation_prompt",
+          "type": "slide",
           "description": "what to show on screen",
-          "source": "slide 3 or video 1:23-1:30 or generate"
+          "source": "slide 3",
+          "slide_number": 3
         }}
       ],
       "key_takeaway": "one sentence summary",
@@ -244,12 +274,29 @@ Produce JSON with this EXACT structure:
 Rules:
 - The hook must grab attention in 3 seconds (question, surprising fact, or bold claim)
 - Narration should feel like a real TikTok creator explaining the concept — conversational, not textbook
-- Visual directions should reference specific slides/diagrams when available
+- CRITICAL: Every visual_directions entry MUST include "slide_number" — the integer page number of the slide to display on screen during that segment
+- Map each part of the narration to the most relevant slide. As the narration discusses different concepts, change the slide_number to match
+- You can reference ANY slide from the available slides list, not just the topic-related ones
+- Prefer using actual slides over text_overlays or animation_prompts — the slides already have the content
 - For slides, describe what part of the slide to zoom into or highlight
-- For concepts without slides, suggest text overlays or animation prompts for MiniMax video generation
 - Include the professor's key examples or analogies if they used any
 - The quiz should test understanding of the core concept
 - Output ONLY the JSON"""
+
+    @staticmethod
+    def _extract_slide_number(v: dict) -> int | None:
+        """Extract slide page number from a visual direction dict."""
+        sn = v.get("slide_number")
+        if sn is not None:
+            try:
+                return int(sn)
+            except (ValueError, TypeError):
+                pass
+        source = v.get("source", "")
+        m = re.match(r'slide\s+(\d+)', source, re.IGNORECASE)
+        if m:
+            return int(m.group(1))
+        return None
 
     def _parse_script_result(
         self, result: dict, seg: TopicSegment
@@ -273,6 +320,7 @@ Rules:
                     visual_type=v.get("type", "text_overlay"),
                     description=v.get("description", ""),
                     source_reference=v.get("source", ""),
+                    slide_number=self._extract_slide_number(v),
                 ))
 
             if not visuals:
@@ -325,6 +373,7 @@ Rules:
     def _fallback_script(self, seg: TopicSegment) -> ReelScript:
         """Generate a minimal script when LLM parsing fails."""
         narration = seg.transcript_text[:500] if seg.transcript_text else seg.topic_name
+        fallback_slide = seg.related_slide_nums[0] if seg.related_slide_nums else None
         return ReelScript(
             topic=seg.topic_name,
             hook=f"Let's talk about {seg.topic_name}!",
@@ -332,8 +381,9 @@ Rules:
             visual_directions=[VisualDirection(
                 timestamp_sec=0,
                 duration_sec=float(self.reel_duration),
-                visual_type="text_overlay",
+                visual_type="slide" if fallback_slide else "text_overlay",
                 description=f"Explaining: {seg.topic_name}",
+                slide_number=fallback_slide,
             )],
             target_duration_sec=self.reel_duration,
             source_time_range=seg.time_range_formatted,
