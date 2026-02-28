@@ -6,6 +6,13 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+# Load .env from project root
+from pathlib import Path
+_env_path = Path(__file__).resolve().parent.parent.parent / ".env"
+if _env_path.exists():
+    from dotenv import load_dotenv
+    load_dotenv(_env_path)
+
 from app.database.base import Base
 import app.models  # noqa: F401 — registers all models with Base.metadata
 
