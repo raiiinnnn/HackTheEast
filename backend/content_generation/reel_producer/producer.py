@@ -225,18 +225,20 @@ class ReelProducer:
         if tts_result is None:
             raise RuntimeError("TTS generation failed — check MINIMAX_API_KEY")
 
-        # 2) Render the relevant slide(s) as image
-        slide_img = self._get_slide_for_reel(script, 0, work)
-        if slide_img is None:
-            slide_nums = script.get("related_slide_nums", [])
-            page = slide_nums[0] if slide_nums else 1
-            slide_img = work / f"slide_{page}.png"
-            self._slide_renderer.render_page(page, slide_img)
+        audio_duration = self.compositor.get_duration(tts_audio)
 
-        # 3) Create video: slide image + TTS audio
-        print(f"  -> Compositing slide + audio...")
+        # 2) Build slide segments from visual_directions
+        slide_segments = self._build_slide_segments(script, audio_duration, work)
+
+        # 3) Create video: slide images timed to TTS audio
         raw_video = work / "raw_slide_video.mp4"
-        self.compositor.slide_image_to_video(slide_img, tts_audio, raw_video)
+        if len(slide_segments) > 1:
+            print(f"  -> Compositing {len(slide_segments)} slide segments + audio...")
+            self.compositor.multi_slide_video(slide_segments, tts_audio, raw_video)
+        else:
+            slide_img = slide_segments[0][0] if slide_segments else self._fallback_slide(script, work)
+            print(f"  -> Compositing slide + audio...")
+            self.compositor.slide_image_to_video(slide_img, tts_audio, raw_video)
 
         # 4) Subtitles from the TTS audio
         final = output_dir / f"{name}.mp4"
@@ -258,6 +260,69 @@ class ReelProducer:
 
         self._cleanup(work)
         return final
+
+    def _build_slide_segments(
+        self, script: dict, audio_duration: float, work: Path
+    ) -> list[tuple[Path, float]]:
+        """
+        Parse visual_directions for slide_number references and build
+        a list of (slide_image_path, duration_sec) segments.
+
+        Proportionally scales durations to match the actual audio length.
+        """
+        visual_dirs = script.get("visual_directions", [])
+
+        segments_raw: list[tuple[int, float]] = []
+        for vd in visual_dirs:
+            slide_num = vd.get("slide_number")
+            if slide_num is None:
+                source = vd.get("source_reference", "")
+                m = re.match(r'slide\s+(\d+)', source, re.IGNORECASE)
+                if m:
+                    slide_num = int(m.group(1))
+            dur = float(vd.get("duration_sec", 5))
+            if slide_num is not None:
+                segments_raw.append((int(slide_num), dur))
+
+        if not segments_raw:
+            fallback_img = self._fallback_slide(script, work)
+            return [(fallback_img, audio_duration)]
+
+        total_scripted = sum(d for _, d in segments_raw)
+        if total_scripted <= 0:
+            total_scripted = len(segments_raw) * 5.0
+
+        result: list[tuple[Path, float]] = []
+        for slide_num, dur in segments_raw:
+            scaled_dur = (dur / total_scripted) * audio_duration
+            scaled_dur = max(scaled_dur, 1.5)
+
+            img_path = work / f"slide_raw_{slide_num}.png"
+            if not img_path.exists():
+                try:
+                    self._slide_renderer.render_page_raw(slide_num, img_path)
+                except Exception as e:
+                    print(f"      [slides] render failed for page {slide_num}: {e}")
+                    img_path = self._fallback_slide(script, work)
+
+            result.append((img_path, scaled_dur))
+            print(f"    slide {slide_num} → {scaled_dur:.1f}s")
+
+        return result
+
+    def _fallback_slide(self, script: dict, work: Path) -> Path:
+        """Render a default slide when no slide_number is available."""
+        slide_nums = script.get("related_slide_nums", [])
+        if not slide_nums:
+            for ts in self._topic_segments:
+                if ts.get("topic_name", "") == script.get("topic", ""):
+                    slide_nums = ts.get("related_slide_nums", [])
+                    break
+        page = slide_nums[0] if slide_nums else 1
+        img = work / f"slide_raw_{page}.png"
+        if not img.exists():
+            self._slide_renderer.render_page_raw(page, img)
+        return img
 
     # ------------------------------------------------------------------
     # Slide renderer (for classroom-slides mode)
@@ -451,11 +516,14 @@ class ReelProducer:
         """Resolve paths from old 'backend' folder to 'content_generation'."""
         if not path or not path.strip():
             return path
-        resolved = path.replace("backend\\", "content_generation\\").replace("backend/", "content_generation/")
-        p = Path(resolved)
+        p = Path(path)
         if p.exists():
             return str(p.resolve())
-        return resolved
+        resolved = path.replace("backend\\", "content_generation\\").replace("backend/", "content_generation/")
+        p2 = Path(resolved)
+        if p2.exists():
+            return str(p2.resolve())
+        return path
 
     def _parse_ts(self, ts: str) -> float:
         parts = ts.strip().split(":")

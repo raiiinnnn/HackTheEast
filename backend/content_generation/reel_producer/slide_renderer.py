@@ -179,6 +179,16 @@ class SlideRenderer:
         pix = page.get_pixmap(matrix=mat, alpha=False)
         return Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
 
+    def render_page_raw(self, page_num: int, output_path: str | Path) -> Path:
+        """Render a PDF page as a flat image at its natural aspect ratio (no vertical canvas)."""
+        output_path = Path(output_path)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        img = self.get_slide_image(page_num)
+        if img is None:
+            return self._render_placeholder(f"Slide {page_num}", "", output_path)
+        img.save(str(output_path), "PNG")
+        return output_path
+
     def _gradient_canvas(self) -> "Image.Image":
         from PIL import Image, ImageDraw
         img = Image.new("RGB", (REEL_WIDTH, REEL_HEIGHT))

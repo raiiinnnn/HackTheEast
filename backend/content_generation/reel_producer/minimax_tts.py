@@ -2,6 +2,7 @@
 MiniMax TTS client — generates voiceover audio from text.
 
 Uses the T2A v2 API (non-streaming) to produce MP3 audio files.
+Default voice and settings tuned for engaging, professor-style narration.
 """
 
 from __future__ import annotations
@@ -18,6 +19,11 @@ try:
 except ImportError:
     pass
 
+# Defaults tuned for engaging, human-like professor narration
+_DEFAULT_VOICE = "English_expressive_narrator"
+_DEFAULT_SPEED = 1.2
+_DEFAULT_MODEL = "speech-02-hd"
+
 
 class MinimaxTTS:
     """Generate voiceover audio via MiniMax T2A v2."""
@@ -25,8 +31,10 @@ class MinimaxTTS:
     def __init__(self):
         self.api_key = os.getenv("MINIMAX_API_KEY", "")
         self.base_url = os.getenv("MINIMAX_BASE_URL", "https://api.minimax.io")
-        self.model = os.getenv("MINIMAX_TTS_MODEL", "speech-02-hd")
-        self.voice_id = os.getenv("MINIMAX_VOICE_ID", "male-qn-qingse")
+        self.model = os.getenv("MINIMAX_TTS_MODEL", _DEFAULT_MODEL)
+        self.voice_id = os.getenv("MINIMAX_VOICE_ID", _DEFAULT_VOICE)
+        raw_speed = os.getenv("MINIMAX_TTS_SPEED", str(_DEFAULT_SPEED))
+        self.speed = max(0.5, min(2.0, float(raw_speed)))
         self.mock = os.getenv("MINIMAX_MOCK", "false").lower() in ("1", "true", "yes")
 
     @property
@@ -37,7 +45,7 @@ class MinimaxTTS:
         self,
         text: str,
         output_path: str | Path,
-        speed: float = 1.0,
+        speed: float | None = None,
     ) -> Path | None:
         """
         Generate speech audio from text.
@@ -45,7 +53,7 @@ class MinimaxTTS:
         Args:
             text: The narration script to speak (up to 10k chars)
             output_path: Where to save the MP3 file
-            speed: Speech speed multiplier (0.5-2.0)
+            speed: Speech speed multiplier (0.5-2.0). If None, uses MINIMAX_TTS_SPEED or default 1.2.
 
         Returns:
             Path to the MP3 file, or None on failure.
@@ -57,8 +65,9 @@ class MinimaxTTS:
         output_path = Path(output_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
+        actual_speed = speed if speed is not None else self.speed
         try:
-            return self._call_api(text[:10000], output_path, speed)
+            return self._call_api(text[:10000], output_path, actual_speed)
         except Exception as e:
             print(f"    [TTS] Error: {e}")
             return None
@@ -75,6 +84,7 @@ class MinimaxTTS:
             "model": self.model,
             "text": text,
             "stream": False,
+            "language_boost": "English",
             "voice_setting": {
                 "voice_id": self.voice_id,
                 "speed": speed,
@@ -89,7 +99,7 @@ class MinimaxTTS:
             },
         }
 
-        print(f"    [TTS] Generating voice ({len(text)} chars, voice={self.voice_id})...",
+        print(f"    [TTS] Generating voice ({len(text)} chars, {self.voice_id}, speed={speed})...",
               end="", flush=True)
 
         with httpx.Client(timeout=60) as client:
