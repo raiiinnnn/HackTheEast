@@ -19,7 +19,7 @@ import {
   FontSize,
   BorderRadius,
 } from "../../src/constants/theme";
-import { GOOGLE_CLIENT_ID, API_BASE_URL } from "../../src/constants/api";
+import { GOOGLE_CLIENT_ID, GOOGLE_IOS_CLIENT_ID, API_BASE_URL } from "../../src/constants/api";
 import {
   login,
   loginGoogle,
@@ -46,6 +46,7 @@ export default function LoginScreen() {
 
   const [_request, _response, promptAsync] = Google.useIdTokenAuthRequest({
     clientId: GOOGLE_CLIENT_ID,
+    iosClientId: GOOGLE_IOS_CLIENT_ID,
   });
 
   const handleLogin = async () => {
