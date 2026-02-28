@@ -5,8 +5,20 @@ export interface TokenResponse {
 
 export interface UserResponse {
   id: number;
-  email: string;
+  email: string | null;
   display_name: string | null;
+  auth_provider: string;
+  abelian_address: string | null;
+}
+
+export interface AbelianKeypair {
+  crypto_address: string;
+  spend_secret_key: string;
+  public_key_hex: string;
+}
+
+export interface AbelianChallengeResponse {
+  challenge: string;
 }
 
 export interface SubtopicResponse {
