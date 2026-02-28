@@ -86,10 +86,14 @@ class ReelProducer:
         output_dir: str | Path = "content_generation/output/reels",
         max_reels: int | None = None,
         reel_indices: list[int] | None = None,
+        character_override: list[str] | None = None,
     ) -> list[Path]:
         with open(pipeline_json, "r", encoding="utf-8") as f:
             data = json.load(f)
-        return self.produce(data, output_dir, max_reels, reel_indices)
+        return self.produce(
+            data, output_dir, max_reels, reel_indices,
+            character_override=character_override,
+        )
 
     def produce(
         self,
@@ -97,6 +101,7 @@ class ReelProducer:
         output_dir: str | Path = "content_generation/output/reels",
         max_reels: int | None = None,
         reel_indices: list[int] | None = None,
+        character_override: list[str] | None = None,
     ) -> list[Path]:
         output_dir = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -182,6 +187,7 @@ class ReelProducer:
 
         total = len(selected)
         produced: list[Path] = []
+        char_override_idx = 0
 
         print(f"\n{'='*60}")
         print(f"  Producing {total} Reels")
@@ -193,6 +199,12 @@ class ReelProducer:
             topic = script.get("topic", f"reel_{idx}")
             fmt = script.get("format", "slides-only")
             char_name = script.get("character", "")
+
+            # CLI --characters override: use instead of script's character
+            if fmt == "character" and character_override:
+                char_name = character_override[char_override_idx % len(character_override)]
+                char_override_idx += 1
+
             safe = re.sub(r'[^\w\-]', '_', topic)[:40]
             name = f"reel_{idx:02d}_{safe}_{fmt.replace('-', '_')}"
 
