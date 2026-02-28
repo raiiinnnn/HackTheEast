@@ -230,6 +230,60 @@ class VideoCompositor:
 
         return output_path
 
+    def multi_slide_video(
+        self,
+        slide_segments: list[tuple[str | Path, float]],
+        audio_path: str | Path,
+        output_path: str | Path,
+    ) -> Path:
+        """
+        Create a video from multiple slide images timed to an audio track.
+
+        Each entry in slide_segments is (slide_image_path, duration_sec).
+        The slides are shown sequentially; total duration matches the audio.
+        """
+        output_path = Path(output_path)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+
+        if len(slide_segments) <= 1:
+            img = str(slide_segments[0][0]) if slide_segments else ""
+            return self.slide_image_to_video(img, audio_path, output_path)
+
+        inputs: list[str] = []
+        filter_parts: list[str] = []
+        concat_inputs: list[str] = []
+
+        for i, (img_path, dur) in enumerate(slide_segments):
+            inputs.extend(["-loop", "1", "-t", f"{dur:.2f}", "-i", str(img_path)])
+
+            filter_parts.append(
+                f"[{i}:v]scale=54:96,scale={REEL_WIDTH}:{REEL_HEIGHT}:flags=bicubic[bg{i}];"
+                f"[{i}:v]scale={REEL_WIDTH}:-2:"
+                f"force_original_aspect_ratio=decrease[fg{i}];"
+                f"[bg{i}][fg{i}]overlay=(W-w)/2:(H-h)/2[slide{i}]"
+            )
+            concat_inputs.append(f"[slide{i}]")
+
+        audio_idx = len(slide_segments)
+        inputs.extend(["-i", str(audio_path)])
+
+        fc = ";".join(filter_parts)
+        fc += f";{''.join(concat_inputs)}concat=n={len(slide_segments)}:v=1:a=0[out]"
+
+        _run([
+            "ffmpeg", "-y",
+            *inputs,
+            "-filter_complex", fc,
+            "-map", "[out]", "-map", f"{audio_idx}:a",
+            "-c:v", "libx264", "-c:a", "aac", "-b:a", "192k",
+            "-pix_fmt", "yuv420p", "-r", str(self.fps),
+            "-shortest",
+            "-preset", "ultrafast",
+            str(output_path),
+        ], "multi_slide")
+
+        return output_path
+
     def slide_image_to_video(
         self,
         slide_image: str | Path,
@@ -239,22 +293,17 @@ class VideoCompositor:
         """
         Create a video from a static slide image + audio track.
 
-        Blurred background from the slide itself, clear slide centered.
-        Duration matches the audio file length.
+        Same layout as lecture videos: slide fills the width, blurred
+        background visible above and below. Duration matches the audio.
         """
         output_path = Path(output_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
-        slide_h = int(REEL_HEIGHT * 0.55)
         fc = (
-            # Blurred background from slide image
             f"[0:v]scale=54:96,scale={REEL_WIDTH}:{REEL_HEIGHT}:flags=bicubic[bg];"
-            # Clear slide, fit into center
-            f"[0:v]scale={REEL_WIDTH - 60}:{slide_h}:"
-            f"force_original_aspect_ratio=decrease,"
-            f"pad={REEL_WIDTH - 60}:{slide_h}:(ow-iw)/2:(oh-ih)/2:color=0x0a0a1900[fg];"
-            # Center the slide on the blurred bg
-            f"[bg][fg]overlay=30:({REEL_HEIGHT}-{slide_h})/2[out]"
+            f"[0:v]scale={REEL_WIDTH}:-2:"
+            f"force_original_aspect_ratio=decrease[fg];"
+            f"[bg][fg]overlay=(W-w)/2:(H-h)/2[out]"
         )
 
         _run([

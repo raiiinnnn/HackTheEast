@@ -94,6 +94,10 @@ def main():
         help="Maximum number of reels to generate (default: 10)"
     )
     parser.add_argument(
+        "--max-topics", type=int, default=None,
+        help="Limit to N topics (for testing — generates fewer scripts). Default: no limit"
+    )
+    parser.add_argument(
         "--whisper-model", "-w", default="base",
         choices=["tiny", "base", "small", "medium", "large"],
         help="Whisper model size for transcription (default: base)"
@@ -129,7 +133,7 @@ def main():
     # Fast path: reuse existing transcript, just redo topics + scripts
     # ------------------------------------------------------------------
     if args.from_json:
-        _rescript(args.from_json, output_path, args.duration, args.max_reels, args.no_print_scripts)
+        _rescript(args.from_json, output_path, args.duration, args.max_reels, args.max_topics, args.no_print_scripts)
         return
 
     # ------------------------------------------------------------------
@@ -164,6 +168,7 @@ def main():
         video_path=video_path,
         slides_path=slides_path,
         output_path=output_path,
+        max_topics=args.max_topics,
     )
 
     result.print_summary()
@@ -174,7 +179,7 @@ def main():
     print(f"\nDone! Full result saved to: {output_path}")
 
 
-def _rescript(from_json: str, output_path: str, duration: int, max_reels: int, no_print: bool):
+def _rescript(from_json: str, output_path: str, duration: int, max_reels: int, max_topics: int | None, no_print: bool):
     """Load transcript + slides from an existing JSON, re-run only topics + scripts."""
     import time
 
@@ -227,6 +232,10 @@ def _rescript(from_json: str, output_path: str, duration: int, max_reels: int, n
     print(f"\n[1/2] SEGMENTING TOPICS")
     segmenter = TopicSegmenter()
     topic_segments = segmenter.segment(transcript_segments, slides if slides else None)
+
+    if max_topics is not None:
+        topic_segments = topic_segments[:max_topics]
+        print(f"  (Limited to {max_topics} topic(s) for testing)")
 
     print(f"\n[2/2] GENERATING REEL SCRIPTS")
     generator = ScriptGenerator(reel_duration=duration, max_reels=max_reels)
