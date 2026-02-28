@@ -109,3 +109,14 @@ export async function getMe(): Promise<UserResponse> {
   const { data } = await apiClient.get<UserResponse>("/auth/me");
   return data;
 }
+
+export async function updatePreferences(prefs: {
+  video_duration_pref?: string;
+  reel_types_pref?: string[];
+}): Promise<UserResponse> {
+  const { data } = await apiClient.put<UserResponse>(
+    "/auth/preferences",
+    prefs
+  );
+  return data;
+}
