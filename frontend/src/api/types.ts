@@ -10,6 +10,7 @@ export interface UserResponse {
   auth_provider: string;
   abelian_address: string | null;
   video_duration_pref: string;
+  reel_types_pref: string[];
 }
 
 export interface AbelianKeypair {

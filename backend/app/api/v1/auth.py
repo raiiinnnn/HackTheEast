@@ -200,6 +200,7 @@ async def get_me(current_user: User = Depends(get_current_user)):
 
 
 VALID_DURATION_PREFS = {"short", "medium", "long"}
+VALID_REEL_TYPES = {"clips", "slides_voiceover", "ai_character"}
 
 
 @router.put("/preferences", response_model=UserResponse)
@@ -208,9 +209,19 @@ async def update_preferences(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    if body.video_duration_pref not in VALID_DURATION_PREFS:
-        raise HTTPException(status_code=400, detail=f"Invalid preference. Must be one of: {VALID_DURATION_PREFS}")
-    current_user.video_duration_pref = body.video_duration_pref
+    if body.video_duration_pref is not None:
+        if body.video_duration_pref not in VALID_DURATION_PREFS:
+            raise HTTPException(status_code=400, detail=f"Invalid duration. Must be one of: {VALID_DURATION_PREFS}")
+        current_user.video_duration_pref = body.video_duration_pref
+
+    if body.reel_types_pref is not None:
+        if not body.reel_types_pref:
+            raise HTTPException(status_code=400, detail="Select at least one reel type")
+        invalid = set(body.reel_types_pref) - VALID_REEL_TYPES
+        if invalid:
+            raise HTTPException(status_code=400, detail=f"Invalid reel types: {invalid}. Must be from: {VALID_REEL_TYPES}")
+        current_user.reel_types_pref = body.reel_types_pref
+
     db.add(current_user)
     await db.flush()
     await db.refresh(current_user)
