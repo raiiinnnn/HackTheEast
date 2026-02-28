@@ -23,9 +23,14 @@ class UserResponse(BaseModel):
     display_name: str | None = None
     auth_provider: str = "email"
     abelian_address: str | None = None
+    video_duration_pref: str = "medium"
 
     class Config:
         from_attributes = True
+
+
+class UpdatePreferencesRequest(BaseModel):
+    video_duration_pref: str  # "short", "medium", "long"
 
 
 # --- Google OAuth ---
