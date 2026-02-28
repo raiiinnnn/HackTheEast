@@ -13,6 +13,11 @@ class Settings(BaseSettings):
     MINIMAX_API_KEY: str = ""
     MINIMAX_GROUP_ID: str = ""
 
+    AWS_ACCESS_KEY_ID: str = ""
+    AWS_SECRET_ACCESS_KEY: str = ""
+    AWS_DEFAULT_REGION: str = "us-east-1"
+    BEDROCK_MODEL_ID: str = "anthropic.claude-3-5-sonnet-20241022-v1:0"
+
     S3_ENDPOINT_URL: str = "http://localhost:9000"
     S3_ACCESS_KEY: str = "minioadmin"
     S3_SECRET_KEY: str = "minioadmin"
