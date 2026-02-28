@@ -1,10 +1,10 @@
 FROM golang:1.23-alpine AS builder
 
 WORKDIR /app
-COPY go.mod go.sum ./
-RUN go mod download
+COPY go.mod go.sum* ./
+RUN go mod download || true
 COPY . .
-RUN CGO_ENABLED=0 go build -o abelian-service .
+RUN go mod tidy && CGO_ENABLED=0 go build -o abelian-service .
 
 FROM alpine:3.19
 RUN apk add --no-cache ca-certificates

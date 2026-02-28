@@ -10,11 +10,11 @@ import {
   ActivityIndicator,
   Alert,
   ScrollView,
+  Modal,
 } from "react-native";
 import { Link, router } from "expo-router";
 import * as Google from "expo-auth-session/providers/google";
 import * as WebBrowser from "expo-web-browser";
-import * as SecureStore from "expo-secure-store";
 import {
   Colors,
   Spacing,
@@ -29,6 +29,8 @@ import {
   abelianRegister,
 } from "../../src/api/auth";
 import { useAuthStore } from "../../src/store/auth";
+import { saveWallet, loadWallet } from "../../src/utils/walletStorage";
+import { MnemonicDisplayModal } from "../../src/components/MnemonicModal";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -39,10 +41,17 @@ export default function RegisterScreen() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [abelianLoading, setAbelianLoading] = useState(false);
+  const [mnemonicWords, setMnemonicWords] = useState<string[]>([]);
+  const [showMnemonic, setShowMnemonic] = useState(false);
+  const [showWalletName, setShowWalletName] = useState(false);
+  const [walletName, setWalletName] = useState("");
   const setToken = useAuthStore((s) => s.setToken);
   const setAbelianAddress = useAuthStore((s) => s.setAbelianAddress);
 
-  const [_request, response, promptAsync] = Google.useIdTokenAuthRequest({
+  const [pendingToken, setPendingToken] = useState<string | null>(null);
+  const [pendingAddress, setPendingAddress] = useState<string | null>(null);
+
+  const [_request, _response, promptAsync] = Google.useIdTokenAuthRequest({
     clientId: GOOGLE_CLIENT_ID,
   });
 
@@ -53,7 +62,11 @@ export default function RegisterScreen() {
     }
     setLoading(true);
     try {
-      const res = await register(email.trim(), password, name.trim() || undefined);
+      const res = await register(
+        email.trim(),
+        password,
+        name.trim() || undefined
+      );
       setToken(res.access_token);
       router.replace("/(tabs)");
     } catch (e: any) {
@@ -85,29 +98,24 @@ export default function RegisterScreen() {
     }
   };
 
-  const handleAbelian = async () => {
+  const confirmAndCreate = async (displayName: string) => {
+    setShowWalletName(false);
     setAbelianLoading(true);
     try {
       const keypair = await abelianGenerate();
+      const mnemonic = keypair.mnemonic.join(" ");
 
-      await SecureStore.setItemAsync("abelian_address", keypair.crypto_address);
-      await SecureStore.setItemAsync("abelian_sk", keypair.spend_secret_key);
+      await saveWallet(keypair.crypto_address, keypair.spend_secret_key, mnemonic);
 
       const res = await abelianRegister(
         keypair.crypto_address,
-        name.trim() || "Abelian User"
+        displayName || "Abelian User"
       );
 
-      setAbelianAddress(keypair.crypto_address);
-      setToken(res.access_token);
-
-      Alert.alert(
-        "Quantum Wallet Created",
-        `Your Abelian address:\n${keypair.crypto_address.slice(0, 32)}...` +
-          "\n\nThis is secured with CRYSTALS-Dilithium post-quantum cryptography." +
-          "\n\nYour private key has been stored securely on this device.",
-        [{ text: "Continue", onPress: () => router.replace("/(tabs)") }]
-      );
+      setPendingToken(res.access_token);
+      setPendingAddress(keypair.crypto_address);
+      setMnemonicWords(keypair.mnemonic);
+      setShowMnemonic(true);
     } catch (e: any) {
       Alert.alert(
         "Abelian registration failed",
@@ -115,6 +123,36 @@ export default function RegisterScreen() {
       );
     } finally {
       setAbelianLoading(false);
+    }
+  };
+
+  const promptWalletName = () => {
+    setWalletName("");
+    setShowWalletName(true);
+  };
+
+  const handleAbelian = async () => {
+    const existing = await loadWallet();
+    if (existing) {
+      Alert.alert(
+        "Wallet Exists",
+        "A quantum wallet already exists on this device. Creating a new one will replace it and you'll lose access to the old account.",
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Replace", style: "destructive", onPress: promptWalletName },
+        ]
+      );
+      return;
+    }
+    promptWalletName();
+  };
+
+  const handleMnemonicConfirm = () => {
+    setShowMnemonic(false);
+    if (pendingToken && pendingAddress) {
+      setAbelianAddress(pendingAddress);
+      setToken(pendingToken);
+      router.replace("/(tabs)");
     }
   };
 
@@ -175,7 +213,11 @@ export default function RegisterScreen() {
           </View>
 
           <TouchableOpacity
-            style={[styles.socialButton, styles.googleButton, googleLoading && styles.buttonDisabled]}
+            style={[
+              styles.socialButton,
+              styles.googleButton,
+              googleLoading && styles.buttonDisabled,
+            ]}
             onPress={handleGoogle}
             disabled={googleLoading}
           >
@@ -192,7 +234,11 @@ export default function RegisterScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.socialButton, styles.abelianButton, abelianLoading && styles.buttonDisabled]}
+            style={[
+              styles.socialButton,
+              styles.abelianButton,
+              abelianLoading && styles.buttonDisabled,
+            ]}
             onPress={handleAbelian}
             disabled={abelianLoading}
           >
@@ -225,6 +271,52 @@ export default function RegisterScreen() {
           </Link>
         </View>
       </ScrollView>
+
+      <Modal
+        visible={showWalletName}
+        animationType="slide"
+        transparent
+        statusBarTranslucent
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalSheet}>
+            <Text style={styles.modalTitle}>Create Quantum Wallet</Text>
+            <Text style={styles.modalSubtitle}>
+              Choose a display name for your wallet account
+            </Text>
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Display Name"
+              placeholderTextColor={Colors.textMuted}
+              value={walletName}
+              onChangeText={setWalletName}
+              autoFocus
+            />
+            <TouchableOpacity
+              style={[
+                styles.modalButton,
+                !walletName.trim() && styles.buttonDisabled,
+              ]}
+              onPress={() => confirmAndCreate(walletName.trim())}
+              disabled={!walletName.trim()}
+            >
+              <Text style={styles.modalButtonText}>Generate Wallet</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.modalCancel}
+              onPress={() => setShowWalletName(false)}
+            >
+              <Text style={styles.modalCancelText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      <MnemonicDisplayModal
+        visible={showMnemonic}
+        words={mnemonicWords}
+        onConfirm={handleMnemonicConfirm}
+      />
     </KeyboardAvoidingView>
   );
 }
@@ -333,6 +425,60 @@ const styles = StyleSheet.create({
     fontSize: FontSize.xs,
     textAlign: "center",
     lineHeight: 18,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.7)",
+    justifyContent: "center",
+    paddingHorizontal: Spacing.xl,
+  },
+  modalSheet: {
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.xl,
+  },
+  modalTitle: {
+    fontSize: FontSize.xl,
+    fontWeight: "800",
+    color: Colors.secondary,
+    textAlign: "center",
+    marginBottom: Spacing.sm,
+  },
+  modalSubtitle: {
+    fontSize: FontSize.sm,
+    color: Colors.textSecondary,
+    textAlign: "center",
+    marginBottom: Spacing.lg,
+  },
+  modalInput: {
+    backgroundColor: Colors.surfaceLight,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.md,
+    fontSize: FontSize.md,
+    color: Colors.text,
+    marginBottom: Spacing.lg,
+  },
+  modalButton: {
+    backgroundColor: Colors.secondary,
+    borderRadius: BorderRadius.md,
+    paddingVertical: Spacing.md,
+    alignItems: "center",
+  },
+  modalButtonText: {
+    color: Colors.background,
+    fontSize: FontSize.md,
+    fontWeight: "700",
+  },
+  modalCancel: {
+    alignItems: "center",
+    marginTop: Spacing.md,
+  },
+  modalCancelText: {
+    color: Colors.textMuted,
+    fontSize: FontSize.md,
   },
   linkButton: {
     alignItems: "center",

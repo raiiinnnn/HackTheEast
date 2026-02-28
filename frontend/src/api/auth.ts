@@ -3,6 +3,7 @@ import {
   TokenResponse,
   UserResponse,
   AbelianKeypair,
+  AbelianRestoredKeys,
   AbelianChallengeResponse,
 } from "./types";
 
@@ -46,6 +47,16 @@ export async function loginGoogle(idToken: string): Promise<TokenResponse> {
 export async function abelianGenerate(): Promise<AbelianKeypair> {
   const { data } = await apiClient.post<AbelianKeypair>(
     "/auth/abelian/generate"
+  );
+  return data;
+}
+
+export async function abelianRestoreKeys(
+  mnemonic: string
+): Promise<AbelianRestoredKeys> {
+  const { data } = await apiClient.post<AbelianRestoredKeys>(
+    "/auth/abelian/restore-keys",
+    { mnemonic }
   );
   return data;
 }

@@ -15,6 +15,13 @@ export interface AbelianKeypair {
   crypto_address: string;
   spend_secret_key: string;
   public_key_hex: string;
+  mnemonic: string[];
+}
+
+export interface AbelianRestoredKeys {
+  crypto_address: string;
+  spend_secret_key: string;
+  public_key_hex: string;
 }
 
 export interface AbelianChallengeResponse {
