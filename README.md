@@ -145,3 +145,13 @@ All functions fall back to local stub generators if the API is unavailable, enab
 - **Video pipeline**: Reel metadata (scripts, captions, visual notes) is generated first. Actual video composition is a clear placeholder — plug in ffmpeg/remotion pipeline later.
 - **S3 abstraction**: Storage uses boto3 with configurable endpoint URL, making it easy to swap between MinIO (local), AWS S3, Cloudflare R2, etc.
 - **Feed interleaving**: Quiz cards are inserted every N reels (default 3) to reinforce learning while scrolling.
+
+## Examples
+
+https://github.com/user-attachments/assets/b3ff513f-e748-4a07-a4ef-28e49216d8c2
+
+https://github.com/user-attachments/assets/a1d57171-7b52-4ee8-937b-240a38caaf6a
+
+https://github.com/user-attachments/assets/4ae211a1-fc86-4498-9b12-34445fae78bb
+
+
