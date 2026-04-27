@@ -148,10 +148,11 @@ All functions fall back to local stub generators if the API is unavailable, enab
 
 ## Examples
 
-https://github.com/user-attachments/assets/b3ff513f-e748-4a07-a4ef-28e49216d8c2
+https://github.com/user-attachments/assets/4ae211a1-fc86-4498-9b12-34445fae78bb
 
 https://github.com/user-attachments/assets/a1d57171-7b52-4ee8-937b-240a38caaf6a
 
-https://github.com/user-attachments/assets/4ae211a1-fc86-4498-9b12-34445fae78bb
+https://github.com/user-attachments/assets/b3ff513f-e748-4a07-a4ef-28e49216d8c2
+
 
 
